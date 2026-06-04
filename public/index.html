@@ -3,8 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SiPOPT Padi — BRMP Kalimantan Barat</title>
+
+  <!-- Primary SEO -->
+  <title>SiPOPT Padi — Prediksi Risiko OPT Padi Berbasis Cuaca Realtime</title>
+  <meta name="description" content="Pantau risiko serangan OPT padi (blast, hawar daun bakteri, wereng coklat, bercak coklat) berbasis data cuaca realtime. Prakiraan 14 hari untuk seluruh provinsi di Jawa dan Kalimantan. Gratis.">
+  <meta name="keywords" content="OPT padi, prediksi penyakit padi, blast padi, hawar daun bakteri HDB, wereng coklat, bercak coklat, prakiraan cuaca pertanian, BRMP Kalimantan Barat, SiPOPT padi, risiko padi">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="BRMP Kalimantan Barat">
+  <meta name="theme-color" content="#15803d">
+  <link rel="canonical" href="https://pantau.agroinovasi.my.id/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SiPOPT Padi — Prediksi Risiko OPT Padi Berbasis Cuaca Realtime">
+  <meta property="og:description" content="Pantau risiko blast, HDB, wereng coklat, dan bercak coklat berdasarkan cuaca realtime. Pilih provinsi, kab/kota, dan varietas padi Anda.">
+  <meta property="og:url" content="https://pantau.agroinovasi.my.id/">
+  <meta property="og:site_name" content="SiPOPT Padi">
+  <meta property="og:locale" content="id_ID">
+  <meta property="og:image" content="https://pantau.agroinovasi.my.id/favicon.svg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="SiPOPT Padi — Prediksi Risiko OPT Padi">
+  <meta name="twitter:description" content="Pantau risiko blast, HDB, wereng coklat, dan bercak coklat berdasarkan cuaca realtime untuk Jawa dan Kalimantan.">
+
+  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Performance: preconnect CDN -->
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://api.open-meteo.com">
+
+  <!-- Styles -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
           integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
@@ -21,18 +52,54 @@
     .variety-option-highlight { background:#dcfce7; }
     #variety-list { scrollbar-width:thin; scrollbar-color:#d1d5db transparent }
     #variety-trigger[aria-expanded="true"] .variety-chevron { transform:rotate(180deg); }
-</style>
+  </style>
+
+  <!-- Schema.org WebApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SiPOPT Padi",
+    "alternateName": "Sistem Informasi Prediksi OPT Padi",
+    "description": "Pantau risiko serangan organisme pengganggu tanaman (OPT) padi — blast, hawar daun bakteri, wereng coklat, bercak coklat — berbasis data cuaca realtime untuk seluruh provinsi di Jawa dan Kalimantan.",
+    "url": "https://pantau.agroinovasi.my.id",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Web Browser",
+    "inLanguage": "id",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "IDR"
+    },
+    "featureList": [
+      "Prakiraan risiko blast padi (Pyricularia oryzae)",
+      "Prakiraan risiko hawar daun bakteri / HDB (Xanthomonas oryzae)",
+      "Prakiraan risiko wereng coklat (Nilaparvata lugens)",
+      "Prakiraan risiko bercak coklat (Helminthosporium oryzae)",
+      "Data cuaca realtime dari Open-Meteo",
+      "Prakiraan 14 hari ke depan",
+      "Penyesuaian risiko berdasarkan varietas padi",
+      "Deteksi lokasi GPS otomatis"
+    ],
+    "provider": {
+      "@type": "Organization",
+      "name": "BRMP Kalimantan Barat",
+      "url": "https://pantau.agroinovasi.my.id"
+    }
+  }
+  </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
-  <!-- Header -->
-  <header class="bg-green-700 text-white shadow-lg sticky top-0 z-20">
+  <!-- Header / Site Identity -->
+  <header class="bg-green-700 text-white shadow-lg sticky top-0 z-20" role="banner">
     <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-bold leading-tight flex items-center gap-2">
           🌾 SiPOPT Padi
         </h1>
-        <p class="text-green-200 text-xs">BRMP Kalimantan Barat</p>
+        <p class="text-green-200 text-xs">Prediksi OPT Padi · BRMP Kalimantan Barat</p>
       </div>
       <div class="text-right">
         <p class="text-green-200 text-xs">Terakhir diperbarui</p>
@@ -41,114 +108,126 @@
     </div>
   </header>
 
-  <main class="max-w-2xl mx-auto px-4 py-5 space-y-4">
+  <main class="max-w-2xl mx-auto px-4 py-5 space-y-4" id="main-content">
+
+    <!-- Intro untuk SEO — visually minimal, semantically helpful -->
+    <p class="sr-only">
+      SiPOPT Padi membantu petani dan penyuluh pertanian memantau risiko serangan OPT padi
+      seperti blast, hawar daun bakteri (HDB), wereng coklat, dan bercak coklat
+      berdasarkan data cuaca realtime di seluruh Jawa dan Kalimantan.
+    </p>
 
     <!-- Location Selector -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-start gap-3">
-      <span class="text-lg mt-1">📍</span>
-      <div class="flex-1 space-y-2">
-        <div>
-          <label class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Provinsi</label>
-          <select id="province-selector" onchange="onProvinceChange()"
-                  class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
-          </select>
+    <section aria-label="Pilih lokasi pantauan">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-start gap-3">
+        <span class="text-lg mt-1" aria-hidden="true">📍</span>
+        <div class="flex-1 space-y-2">
+          <div>
+            <label for="province-selector" class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Provinsi</label>
+            <select id="province-selector" onchange="onProvinceChange()"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
+            </select>
+          </div>
+          <div>
+            <label for="city-selector" class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Kab / Kota</label>
+            <select id="city-selector" onchange="onCityChange()"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
+            </select>
+          </div>
+          <div id="geo-status" class="hidden text-xs text-green-600 font-medium" role="status" aria-live="polite"></div>
         </div>
-        <div>
-          <label class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Kab / Kota</label>
-          <select id="city-selector" onchange="onCityChange()"
-                  class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
-          </select>
-        </div>
-        <div id="geo-status" class="hidden text-xs text-green-600 font-medium"></div>
       </div>
-    </div>
+    </section>
 
     <!-- Variety Selector -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-center gap-3">
-      <span class="text-lg">🌾</span>
-      <div class="flex-1">
-        <label for="variety-trigger" class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Varietas Padi</label>
-        <div id="variety-selector-wrap" class="relative">
-          <button type="button" id="variety-trigger" aria-haspopup="listbox" aria-expanded="false"
-                  class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500 flex items-center gap-2 text-left">
-            <span id="variety-label" class="flex-1 truncate text-gray-800"></span>
-            <svg class="variety-chevron w-4 h-4 shrink-0 text-gray-500 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
-            </svg>
-          </button>
-          <div id="variety-panel"
-               class="hidden absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-            <div class="p-2 border-b border-gray-100 bg-white">
-              <input type="text" id="variety-search" autocomplete="off"
-                     placeholder="Cari varietas…"
-                     class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500" />
+    <section aria-label="Pilih varietas padi">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-center gap-3">
+        <span class="text-lg" aria-hidden="true">🌾</span>
+        <div class="flex-1">
+          <label for="variety-trigger" class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Varietas Padi</label>
+          <div id="variety-selector-wrap" class="relative">
+            <button type="button" id="variety-trigger" aria-haspopup="listbox" aria-expanded="false"
+                    class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500 flex items-center gap-2 text-left">
+              <span id="variety-label" class="flex-1 truncate text-gray-800"></span>
+              <svg class="variety-chevron w-4 h-4 shrink-0 text-gray-500 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
+              </svg>
+            </button>
+            <div id="variety-panel"
+                 class="hidden absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+              <div class="p-2 border-b border-gray-100 bg-white">
+                <input type="text" id="variety-search" autocomplete="off"
+                       placeholder="Cari varietas…"
+                       aria-label="Cari varietas padi"
+                       class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500" />
+              </div>
+              <div id="variety-list" class="max-h-48 overflow-y-auto" role="listbox" aria-label="Daftar varietas padi"></div>
             </div>
-            <div id="variety-list" class="max-h-48 overflow-y-auto" role="listbox"></div>
           </div>
+          <p id="variety-note" class="hidden text-xs mt-1.5 text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1" role="note"></p>
         </div>
-        <p id="variety-note" class="hidden text-xs mt-1.5 text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1"></p>
       </div>
-    </div>
+    </section>
 
     <!-- Weather Cards -->
-    <div id="weather-section" class="hidden">
-      <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2 px-1">🌤️ Cuaca Realtime</p>
+    <section id="weather-section" class="hidden" aria-label="Data cuaca realtime">
+      <h2 class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2 px-1">🌤️ Cuaca Realtime</h2>
       <div class="grid grid-cols-2 gap-3">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1">🌡️</div>
+          <div class="text-2xl mb-1" aria-hidden="true">🌡️</div>
           <div class="text-xs text-gray-500 mb-1">Suhu Udara</div>
-          <div id="weather-suhu" class="text-3xl font-bold text-gray-800">--</div>
+          <div id="weather-suhu" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
           <div class="text-xs text-gray-400">°C</div>
           <div id="weather-suhu-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
         </div>
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1">💧</div>
+          <div class="text-2xl mb-1" aria-hidden="true">💧</div>
           <div class="text-xs text-gray-500 mb-1">Kelembaban</div>
-          <div id="weather-rh" class="text-3xl font-bold text-gray-800">--</div>
+          <div id="weather-rh" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
           <div class="text-xs text-gray-400">%</div>
           <div id="weather-rh-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
         </div>
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1">🔽</div>
+          <div class="text-2xl mb-1" aria-hidden="true">🔽</div>
           <div class="text-xs text-gray-500 mb-1">Tekanan</div>
-          <div id="weather-tekanan" class="text-3xl font-bold text-gray-800">--</div>
+          <div id="weather-tekanan" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
           <div class="text-xs text-gray-400">hPa</div>
           <div id="weather-tekanan-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
         </div>
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1">🌧️</div>
+          <div class="text-2xl mb-1" aria-hidden="true">🌧️</div>
           <div class="text-xs text-gray-500 mb-1">Hujan 7 Hari</div>
-          <div id="weather-hujan" class="text-3xl font-bold text-gray-800">--</div>
+          <div id="weather-hujan" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
           <div class="text-xs text-gray-400">mm</div>
           <div id="weather-hujan-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
         </div>
       </div>
-      <div id="weather-dummy-warning" class="hidden text-xs text-center text-amber-600 mt-2">
+      <div id="weather-dummy-warning" class="hidden text-xs text-center text-amber-600 mt-2" role="alert">
         ⚠️ Menggunakan data estimasi (Open-Meteo tidak tersedia)
       </div>
-      <p class="text-xs text-center text-gray-400 mt-1">Sumber: Open-Meteo.com (realtime)</p>
-    </div>
+      <p class="text-xs text-center text-gray-400 mt-1">Sumber: <a href="https://open-meteo.com" rel="noopener noreferrer" class="underline hover:text-gray-600">Open-Meteo.com</a> (realtime)</p>
+    </section>
 
     <!-- Loading -->
-    <div id="loading-section" class="pulse text-center py-12">
-      <div class="text-4xl mb-2">⏳</div>
+    <div id="loading-section" class="pulse text-center py-12" role="status" aria-label="Memuat data cuaca">
+      <div class="text-4xl mb-2" aria-hidden="true">⏳</div>
       <div class="text-gray-500 text-sm">Memuat data cuaca...</div>
     </div>
 
     <!-- Risk Section -->
-    <div id="risk-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <section id="risk-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4" aria-label="Risiko penyakit tanaman padi">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">⚕️ Risiko Penyakit Tanaman</h3>
-        <button onclick="toggleDiseaseInfo()"
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">⚕️ Risiko Penyakit Tanaman</h2>
+        <button onclick="toggleDiseaseInfo()" aria-expanded="false" aria-controls="disease-info-panel"
                 class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
-          <span>ℹ️</span><span id="info-toggle-label">Cara hitung</span>
+          <span aria-hidden="true">ℹ️</span><span id="info-toggle-label">Cara hitung</span>
         </button>
       </div>
-      <div id="risk-cards" class="space-y-2"></div>
+      <div id="risk-cards" class="space-y-2" aria-live="polite" aria-label="Tingkat risiko OPT padi"></div>
 
       <!-- Disease Info Panel -->
       <div id="disease-info-panel" class="hidden mt-3 pt-3 border-t border-gray-100 space-y-2 text-xs text-gray-600">
-        <p class="font-semibold text-gray-700">Penyesuaian Varietas (adaptive):</p>
+        <h3 class="font-semibold text-gray-700">Penyesuaian Varietas (adaptive):</h3>
         <div class="bg-amber-50 rounded p-2 border border-amber-200">
           Risiko cuaca digeser berdasarkan ketahanan genetik label SK pelepasan:
           <strong>Tahan (R)</strong> −2 level (−1 jika tekanan cuaca ekstrem);
@@ -159,86 +238,104 @@
           <em>tidak diuji (?)</em> tidak ada penyesuaian.
           Skala SES IRRI dari <em>Deskripsi VUB Padi</em> BB Padi/Balitbangtan 2015.
         </div>
-        <div class="bg-red-50 rounded p-2 border border-red-200">
-          ⚠️ <strong>Caveat:</strong> Label SK pelepasan diuji rumah kaca BB Padi Sukamandi terhadap patotipe/ras spesifik.
-          Patotipe Xoo & ras <em>P. oryzae</em> lokal Kalbar dapat berbeda dan ketahanan bisa <em>patah</em>
+        <div class="bg-red-50 rounded p-2 border border-red-200" role="note">
+          ⚠️ <strong>Catatan penting:</strong> Label SK pelepasan diuji rumah kaca BB Padi Sukamandi terhadap patotipe/ras spesifik.
+          Patotipe Xoo &amp; ras <em>P. oryzae</em> lokal Kalbar dapat berbeda dan ketahanan bisa <em>patah</em>
           (kasus Situ Bagendit "agak tahan" → KP 40,25% di Jember bila pupuk N berlebih).
           Pertahankan pupuk N ≤ 200 kg Urea/ha + pengairan berselang + jajar legowo.
         </div>
-        <p class="font-semibold text-gray-700 pt-2">Model kumulatif 7 hari (bukan snapshot):</p>
+        <h3 class="font-semibold text-gray-700 pt-2">Model kumulatif 7 hari (bukan snapshot):</h3>
         <div class="bg-gray-50 rounded p-2">
-          <span class="font-semibold">🔴 Blast Padi</span> — Akumulasi jam RH≥85% &amp; suhu 24-28°C/7hr.
+          <strong>🔴 Blast Padi</strong> — Akumulasi jam RH≥85% &amp; suhu 24–28°C/7hr.
           <strong>Tinggi</strong> jika ≥3 hari favorable + hujan ≥20mm/7hr.
           <em class="text-gray-400">(Pyricularia oryzae; IRRI, BB Padi)</em>
         </div>
         <div class="bg-gray-50 rounded p-2">
-          <span class="font-semibold">🟡 Bercak Coklat</span> — Hari RH≥80% ≥10 jam/7hr.
+          <strong>🟡 Bercak Coklat</strong> — Hari RH≥80% ≥10 jam/7hr.
           <strong>Sedang</strong> jika ≥3 hari + hujan ≥15mm/7hr.
           <em class="text-gray-400">(Helminthosporium oryzae)</em>
         </div>
         <div class="bg-gray-50 rounded p-2">
-          <span class="font-semibold">🔴 Hawar Daun Bakteri</span> — Jam hujan (&gt;1mm) + jam RH≥85%/72hr.
+          <strong>🔴 Hawar Daun Bakteri (HDB)</strong> — Jam hujan (&gt;1mm) + jam RH≥85%/72hr.
           <strong>Tinggi</strong> jika ≥15 jam hujan &amp; ≥20 jam RH tinggi/72hr.
           <em class="text-gray-400">(Xanthomonas oryzae pv. oryzae)</em>
         </div>
         <div class="bg-gray-50 rounded p-2">
-          <span class="font-semibold">🔴 Wereng Coklat</span> — Jam optimal (RH≥78%, 22-32°C)/7hr.
+          <strong>🔴 Wereng Coklat</strong> — Jam optimal (RH≥78%, 22–32°C)/7hr.
           Hujan &gt;80mm/7hr menekan. <strong>Tinggi</strong> jika ≥80 jam optimal.
           <em class="text-gray-400">(Nilaparvata lugens)</em>
         </div>
         <p class="text-gray-400 text-xs">Model indikatif — bukan diagnosis definitif.</p>
       </div>
-    </div>
+    </section>
 
     <!-- Weather Chart -->
-    <div id="weather-chart-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <section id="weather-chart-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4" aria-label="Grafik cuaca 24 jam">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-sm font-semibold text-gray-700">Cuaca 24 Jam</h2>
-        <div class="flex gap-1">
-          <button onclick="showWeatherTab('suhu-rh')" id="wtab-suhu-rh"
+        <div class="flex gap-1" role="tablist" aria-label="Pilih grafik">
+          <button onclick="showWeatherTab('suhu-rh')" id="wtab-suhu-rh" role="tab" aria-selected="true"
                   class="ftab active px-2 py-1 text-xs rounded border">🌡️ Suhu &amp; RH</button>
-          <button onclick="showWeatherTab('hujan')" id="wtab-hujan"
+          <button onclick="showWeatherTab('hujan')" id="wtab-hujan" role="tab" aria-selected="false"
                   class="ftab px-2 py-1 text-xs rounded border">🌧️ Hujan</button>
         </div>
       </div>
       <div class="relative" style="height:220px">
-        <div id="weather-chart-suhu-rh" class="absolute inset-0">
-          <canvas id="weatherChart" aria-label="Grafik suhu dan kelembaban udara"></canvas>
+        <div id="weather-chart-suhu-rh" class="absolute inset-0" role="tabpanel">
+          <canvas id="weatherChart" aria-label="Grafik suhu dan kelembaban udara 24 jam terakhir"></canvas>
         </div>
-        <div id="weather-chart-hujan" class="hidden absolute inset-0">
-          <canvas id="rainChart" aria-label="Grafik curah hujan"></canvas>
+        <div id="weather-chart-hujan" class="hidden absolute inset-0" role="tabpanel">
+          <canvas id="rainChart" aria-label="Grafik curah hujan 24 jam terakhir"></canvas>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Forecast Section -->
-    <div id="forecast-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+    <section id="forecast-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4" aria-label="Prakiraan 14 hari dan potensi OPT padi">
       <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">📅 Prakiraan 14 Hari &amp; Potensi Penyakit</h2>
-      <div class="flex gap-1 flex-wrap mb-3">
-        <button onclick="changeForecastTab('all')"    id="ftab-all"    class="ftab active px-2 py-1 text-xs rounded border">Semua</button>
-        <button onclick="changeForecastTab('blast')"  id="ftab-blast"  class="ftab px-2 py-1 text-xs rounded border">Blast</button>
-        <button onclick="changeForecastTab('bercak')" id="ftab-bercak" class="ftab px-2 py-1 text-xs rounded border">Bercak</button>
-        <button onclick="changeForecastTab('hdb')"    id="ftab-hdb"    class="ftab px-2 py-1 text-xs rounded border">HDB</button>
-        <button onclick="changeForecastTab('wereng')" id="ftab-wereng" class="ftab px-2 py-1 text-xs rounded border">Wereng</button>
+      <div class="flex gap-1 flex-wrap mb-3" role="tablist" aria-label="Filter penyakit">
+        <button onclick="changeForecastTab('all')"    id="ftab-all"    role="tab" aria-selected="true"  class="ftab active px-2 py-1 text-xs rounded border">Semua</button>
+        <button onclick="changeForecastTab('blast')"  id="ftab-blast"  role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">Blast</button>
+        <button onclick="changeForecastTab('bercak')" id="ftab-bercak" role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">Bercak</button>
+        <button onclick="changeForecastTab('hdb')"    id="ftab-hdb"    role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">HDB</button>
+        <button onclick="changeForecastTab('wereng')" id="ftab-wereng" role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">Wereng</button>
       </div>
-      <div id="forecast-scroll" class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1"></div>
-      <div class="mt-3 flex flex-wrap gap-3 text-xs text-gray-500">
+      <div id="forecast-scroll" class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" aria-live="polite"></div>
+      <div class="mt-3 flex flex-wrap gap-3 text-xs text-gray-500" aria-label="Keterangan tingkat risiko">
         <span>🚨 Tinggi</span><span>⚠️ Sedang</span><span>🌿 Rendah</span>
         <span class="ml-auto text-gray-400">Open-Meteo.com</span>
       </div>
-    </div>
+    </section>
 
+    <!-- Internal link + CTA -->
     <p class="text-center text-gray-400 text-xs py-1">
       Punya masukan atau pertanyaan?
       <a href="/masukan.html" class="text-green-600 font-medium underline underline-offset-2">Beri tahu kami</a>
     </p>
 
-    <footer class="text-center text-gray-400 text-xs py-2">
-      SiPOPT Padi · BRMP Kalimantan Barat · Data: Open-Meteo.com
-    </footer>
-
   </main>
 
-  <script src="app.js"></script>
+  <footer class="max-w-2xl mx-auto px-4 pb-6 pt-2 text-center text-gray-400 text-xs" role="contentinfo">
+    <address class="not-italic">
+      <strong class="text-gray-500">SiPOPT Padi</strong> —
+      Sistem Informasi Prediksi OPT Padi
+    </address>
+    <p class="mt-0.5">
+      Dikembangkan oleh BRMP Kalimantan Barat ·
+      Data cuaca: <a href="https://open-meteo.com" rel="noopener noreferrer" class="hover:text-green-600 underline">Open-Meteo.com</a>
+    </p>
+    <p class="mt-0.5">
+      <a href="/" class="hover:text-green-600">Beranda</a> ·
+      <a href="/masukan.html" class="hover:text-green-600">Beri Masukan</a>
+    </p>
+  </footer>
+
+  <script src="app.js" defer></script>
+
+  <noscript>
+    <p style="text-align:center;padding:2rem;color:#6b7280">
+      SiPOPT Padi memerlukan JavaScript. Aktifkan JavaScript di browser Anda untuk menggunakan aplikasi ini.
+    </p>
+  </noscript>
 </body>
 </html>
