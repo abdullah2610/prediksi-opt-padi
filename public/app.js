@@ -1,8 +1,8 @@
 const API_BASE_URL = window.location.origin;
 const WEATHER_REFRESH_MS = 300000;
-const VARIETY_STORAGE_KEY  = 'sipopt:varietyId';
-const PROVINCE_STORAGE_KEY = 'sipopt:provinceId';
-const CITY_STORAGE_KEY     = 'sipopt:cityName';
+const VARIETY_STORAGE_KEY  = 'pantaupadi:varietyId';
+const PROVINCE_STORAGE_KEY = 'pantaupadi:provinceId';
+const CITY_STORAGE_KEY     = 'pantaupadi:cityName';
 
 // ── Location Data ─────────────────────────────────────────────────────────────
 const PROVINCES = [

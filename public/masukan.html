@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Primary SEO -->
-  <title>Beri Masukan — SiPOPT Padi | BRMP Kalimantan Barat</title>
-  <meta name="description" content="Kirim masukan, saran, atau laporan pengalaman menggunakan SiPOPT Padi — aplikasi prediksi risiko OPT padi berbasis cuaca BRMP Kalimantan Barat.">
+  <title>Beri Masukan — PantauPadi | BRMP Kalimantan Barat</title>
+  <meta name="description" content="Kirim masukan, saran, atau laporan pengalaman menggunakan PantauPadi — aplikasi prediksi risiko OPT padi berbasis cuaca BRMP Kalimantan Barat.">
   <meta name="robots" content="noindex, follow">
   <meta name="author" content="BRMP Kalimantan Barat">
   <meta name="theme-color" content="#15803d">
@@ -14,10 +14,10 @@
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Beri Masukan — SiPOPT Padi">
-  <meta property="og:description" content="Bantu kami meningkatkan SiPOPT Padi dengan berbagi pengalaman Anda.">
+  <meta property="og:title" content="Beri Masukan — PantauPadi">
+  <meta property="og:description" content="Bantu kami meningkatkan PantauPadi dengan berbagi pengalaman Anda.">
   <meta property="og:url" content="https://pantau.agroinovasi.my.id/masukan.html">
-  <meta property="og:site_name" content="SiPOPT Padi">
+  <meta property="og:site_name" content="PantauPadi">
   <meta property="og:locale" content="id_ID">
 
   <!-- Favicon -->
@@ -28,12 +28,12 @@
   {
     "@context": "https://schema.org",
     "@type": "ContactPage",
-    "name": "Formulir Masukan SiPOPT Padi",
-    "description": "Kirim masukan, saran, atau laporan penggunaan aplikasi SiPOPT Padi.",
+    "name": "Formulir Masukan PantauPadi",
+    "description": "Kirim masukan, saran, atau laporan penggunaan aplikasi PantauPadi.",
     "url": "https://pantau.agroinovasi.my.id/masukan.html",
     "isPartOf": {
       "@type": "WebApplication",
-      "name": "SiPOPT Padi",
+      "name": "PantauPadi",
       "url": "https://pantau.agroinovasi.my.id"
     },
     "breadcrumb": {
@@ -71,7 +71,7 @@
       <div>
         <h1 class="text-lg font-bold leading-tight">💬 Beri Masukan</h1>
         <p class="text-green-200 text-xs">
-          <a href="/" class="hover:text-white transition-colors">SiPOPT Padi</a> · BRMP Kalimantan Barat
+          <a href="/" class="hover:text-white transition-colors">PantauPadi</a> · BRMP Kalimantan Barat
         </p>
       </div>
     </div>
@@ -92,7 +92,7 @@
     <section id="feedback-form" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5" aria-label="Formulir masukan">
 
       <p class="text-sm text-gray-600">
-        Bantu kami meningkatkan <strong>SiPOPT Padi</strong> dengan berbagi pengalaman Anda.
+        Bantu kami meningkatkan <strong>PantauPadi</strong> dengan berbagi pengalaman Anda.
         Masukan Anda langsung digunakan untuk pengembangan layanan prediksi OPT padi ini.
       </p>
 
@@ -140,7 +140,7 @@
           Komentar <span class="text-gray-400 font-normal normal-case">(opsional)</span>
         </label>
         <textarea id="feedback-text" rows="3" maxlength="500"
-                  placeholder="Tuliskan saran, pertanyaan, atau pengalaman Anda menggunakan SiPOPT Padi..."
+                  placeholder="Tuliskan saran, pertanyaan, atau pengalaman Anda menggunakan PantauPadi..."
                   class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-green-500 resize-none"></textarea>
         <p class="text-right text-xs text-gray-400 mt-1" aria-live="polite"><span id="char-count">0</span>/500 karakter</p>
       </div>
@@ -168,7 +168,7 @@
 
   <footer class="max-w-2xl mx-auto px-4 pb-6 pt-2 text-center text-gray-400 text-xs" role="contentinfo">
     <address class="not-italic">
-      <strong class="text-gray-500">SiPOPT Padi</strong> — BRMP Kalimantan Barat
+      <strong class="text-gray-500">PantauPadi</strong> — BRMP Kalimantan Barat
     </address>
     <p class="mt-0.5">
       <a href="/" class="hover:text-green-600">Beranda</a> ·
@@ -245,7 +245,7 @@
           method:  'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify({
-            app:    'SiPOPT Padi — BRMP Kalimantan Barat',
+            app:    'PantauPadi — BRMP Kalimantan Barat',
             rating: feedbackRating ? `${feedbackRating}/5 — ${RATING_LABELS[feedbackRating]}` : '(tidak dinilai)',
             topik:  selectedChips.size > 0 ? [...selectedChips].join(', ') : '(tidak dipilih)',
             saran:  text || '(tidak ada komentar)',
