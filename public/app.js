@@ -1,22 +1,252 @@
 const API_BASE_URL = window.location.origin;
 const WEATHER_REFRESH_MS = 300000;
-const VARIETY_STORAGE_KEY = 'sipopt:varietyId';
+const VARIETY_STORAGE_KEY  = 'sipopt:varietyId';
+const PROVINCE_STORAGE_KEY = 'sipopt:provinceId';
+const CITY_STORAGE_KEY     = 'sipopt:cityName';
 
-const KALBAR_CITIES = [
-  { name: 'Kota Pontianak',    lat: -0.0263, lon: 109.3425 },
-  { name: 'Kota Singkawang',   lat:  0.9027, lon: 108.9776 },
-  { name: 'Kab. Mempawah',     lat: -0.3667, lon: 108.9833 },
-  { name: 'Kab. Sambas',       lat:  1.3667, lon: 109.3000 },
-  { name: 'Kab. Bengkayang',   lat:  0.7333, lon: 109.3333 },
-  { name: 'Kab. Landak',       lat:  0.3511, lon: 109.9682 },
-  { name: 'Kab. Sanggau',      lat:  0.1300, lon: 110.5978 },
-  { name: 'Kab. Sekadau',      lat: -0.0333, lon: 110.9500 },
-  { name: 'Kab. Sintang',      lat:  0.0667, lon: 111.5000 },
-  { name: 'Kab. Melawi',       lat: -0.5000, lon: 111.4667 },
-  { name: 'Kab. Kapuas Hulu',  lat:  0.8667, lon: 113.9333 },
-  { name: 'Kab. Ketapang',     lat: -1.8500, lon: 109.9833 },
-  { name: 'Kab. Kayong Utara', lat: -1.0667, lon: 109.7333 },
-  { name: 'Kab. Kubu Raya',    lat: -0.2667, lon: 109.5333 },
+// ── Location Data ─────────────────────────────────────────────────────────────
+const PROVINCES = [
+  {
+    id: 'kalbar',
+    name: 'Kalimantan Barat',
+    cities: [
+      { name: 'Kota Pontianak',    lat: -0.0263, lon: 109.3425 },
+      { name: 'Kota Singkawang',   lat:  0.9027, lon: 108.9776 },
+      { name: 'Kab. Mempawah',     lat: -0.3667, lon: 108.9833 },
+      { name: 'Kab. Sambas',       lat:  1.3667, lon: 109.3000 },
+      { name: 'Kab. Bengkayang',   lat:  0.7333, lon: 109.3333 },
+      { name: 'Kab. Landak',       lat:  0.3511, lon: 109.9682 },
+      { name: 'Kab. Sanggau',      lat:  0.1300, lon: 110.5978 },
+      { name: 'Kab. Sekadau',      lat: -0.0333, lon: 110.9500 },
+      { name: 'Kab. Sintang',      lat:  0.0667, lon: 111.5000 },
+      { name: 'Kab. Melawi',       lat: -0.5000, lon: 111.4667 },
+      { name: 'Kab. Kapuas Hulu',  lat:  0.8667, lon: 113.9333 },
+      { name: 'Kab. Ketapang',     lat: -1.8500, lon: 109.9833 },
+      { name: 'Kab. Kayong Utara', lat: -1.0667, lon: 109.7333 },
+      { name: 'Kab. Kubu Raya',    lat: -0.2667, lon: 109.5333 },
+    ],
+  },
+  {
+    id: 'kalteng',
+    name: 'Kalimantan Tengah',
+    cities: [
+      { name: 'Kota Palangka Raya',              lat: -2.2070, lon: 113.9167 },
+      { name: 'Kab. Kotawaringin Barat',         lat: -2.6833, lon: 111.6167 },
+      { name: 'Kab. Kotawaringin Timur',         lat: -2.5333, lon: 112.9500 },
+      { name: 'Kab. Kapuas',                     lat: -3.0067, lon: 114.3344 },
+      { name: 'Kab. Barito Selatan',             lat: -1.7333, lon: 114.8333 },
+      { name: 'Kab. Barito Utara',               lat: -0.9500, lon: 114.8833 },
+      { name: 'Kab. Katingan',                   lat: -1.8667, lon: 113.4333 },
+      { name: 'Kab. Seruyan',                    lat: -3.0833, lon: 112.5167 },
+      { name: 'Kab. Sukamara',                   lat: -2.6833, lon: 111.0500 },
+      { name: 'Kab. Lamandau',                   lat: -1.8333, lon: 111.2333 },
+      { name: 'Kab. Gunung Mas',                 lat: -1.2667, lon: 113.8667 },
+      { name: 'Kab. Pulang Pisau',               lat: -3.0000, lon: 114.0833 },
+      { name: 'Kab. Murung Raya',                lat: -0.8667, lon: 114.9000 },
+      { name: 'Kab. Barito Timur',               lat: -1.7833, lon: 115.2167 },
+    ],
+  },
+  {
+    id: 'kalsel',
+    name: 'Kalimantan Selatan',
+    cities: [
+      { name: 'Kota Banjarmasin',           lat: -3.3186, lon: 114.5944 },
+      { name: 'Kota Banjarbaru',            lat: -3.4429, lon: 114.8277 },
+      { name: 'Kab. Banjar',               lat: -3.4167, lon: 114.8583 },
+      { name: 'Kab. Barito Kuala',         lat: -3.0000, lon: 114.7500 },
+      { name: 'Kab. Tapin',                lat: -2.9000, lon: 115.0000 },
+      { name: 'Kab. Hulu Sungai Selatan',  lat: -2.7833, lon: 115.2667 },
+      { name: 'Kab. Hulu Sungai Tengah',   lat: -2.5500, lon: 115.4000 },
+      { name: 'Kab. Hulu Sungai Utara',    lat: -2.4167, lon: 115.2500 },
+      { name: 'Kab. Tabalong',             lat: -2.1667, lon: 115.4167 },
+      { name: 'Kab. Tanah Laut',           lat: -3.8167, lon: 115.0167 },
+      { name: 'Kab. Tanah Bumbu',          lat: -3.4667, lon: 115.9667 },
+      { name: 'Kab. Kotabaru',             lat: -3.2927, lon: 116.2226 },
+      { name: 'Kab. Balangan',             lat: -2.3500, lon: 115.4500 },
+    ],
+  },
+  {
+    id: 'kaltim',
+    name: 'Kalimantan Timur',
+    cities: [
+      { name: 'Kota Samarinda',              lat: -0.5017, lon: 117.1536 },
+      { name: 'Kota Balikpapan',             lat: -1.2675, lon: 116.8289 },
+      { name: 'Kota Bontang',               lat:  0.1328, lon: 117.5000 },
+      { name: 'Kab. Kutai Kartanegara',     lat: -0.4083, lon: 117.0064 },
+      { name: 'Kab. Kutai Barat',           lat: -0.1167, lon: 115.5833 },
+      { name: 'Kab. Kutai Timur',           lat:  0.5003, lon: 117.6267 },
+      { name: 'Kab. Berau',                 lat:  2.1557, lon: 117.4852 },
+      { name: 'Kab. Paser',                 lat: -1.8333, lon: 116.0500 },
+      { name: 'Kab. Penajam Paser Utara',   lat: -1.3833, lon: 116.1833 },
+      { name: 'Kab. Mahakam Ulu',           lat:  0.6667, lon: 115.6000 },
+    ],
+  },
+  {
+    id: 'kalut',
+    name: 'Kalimantan Utara',
+    cities: [
+      { name: 'Kota Tarakan',        lat:  3.3172, lon: 117.5831 },
+      { name: 'Kab. Bulungan',       lat:  2.8333, lon: 117.3667 },
+      { name: 'Kab. Malinau',        lat:  3.5833, lon: 116.6333 },
+      { name: 'Kab. Nunukan',        lat:  4.1430, lon: 117.6683 },
+      { name: 'Kab. Tana Tidung',    lat:  3.3833, lon: 117.2500 },
+    ],
+  },
+  {
+    id: 'dki',
+    name: 'DKI Jakarta',
+    cities: [
+      { name: 'Kota Jakarta Pusat',    lat: -6.1862, lon: 106.8063 },
+      { name: 'Kota Jakarta Utara',    lat: -6.1207, lon: 106.9003 },
+      { name: 'Kota Jakarta Barat',    lat: -6.1676, lon: 106.7627 },
+      { name: 'Kota Jakarta Selatan',  lat: -6.2615, lon: 106.8106 },
+      { name: 'Kota Jakarta Timur',    lat: -6.2250, lon: 106.9004 },
+      { name: 'Kab. Kepulauan Seribu', lat: -5.8500, lon: 106.5167 },
+    ],
+  },
+  {
+    id: 'banten',
+    name: 'Banten',
+    cities: [
+      { name: 'Kota Serang',             lat: -6.1202, lon: 106.1503 },
+      { name: 'Kota Tangerang',          lat: -6.1781, lon: 106.6297 },
+      { name: 'Kota Tangerang Selatan',  lat: -6.2903, lon: 106.7172 },
+      { name: 'Kota Cilegon',            lat: -6.0020, lon: 106.0006 },
+      { name: 'Kab. Serang',             lat: -6.2833, lon: 106.1167 },
+      { name: 'Kab. Tangerang',          lat: -6.3023, lon: 106.5033 },
+      { name: 'Kab. Lebak',             lat: -6.3667, lon: 106.2500 },
+      { name: 'Kab. Pandeglang',         lat: -6.3083, lon: 106.1067 },
+    ],
+  },
+  {
+    id: 'jabar',
+    name: 'Jawa Barat',
+    cities: [
+      { name: 'Kota Bandung',          lat: -6.9175, lon: 107.6191 },
+      { name: 'Kota Bekasi',           lat: -6.2383, lon: 106.9756 },
+      { name: 'Kota Bogor',            lat: -6.5971, lon: 106.8060 },
+      { name: 'Kota Cimahi',           lat: -6.8728, lon: 107.5421 },
+      { name: 'Kota Cirebon',          lat: -6.7063, lon: 108.5571 },
+      { name: 'Kota Depok',            lat: -6.3851, lon: 106.8247 },
+      { name: 'Kota Sukabumi',         lat: -6.9167, lon: 106.9283 },
+      { name: 'Kota Tasikmalaya',      lat: -7.3506, lon: 108.2095 },
+      { name: 'Kota Banjar',           lat: -7.3686, lon: 108.5394 },
+      { name: 'Kab. Bandung',          lat: -7.0333, lon: 107.5167 },
+      { name: 'Kab. Bandung Barat',    lat: -6.8500, lon: 107.4833 },
+      { name: 'Kab. Bekasi',           lat: -6.3167, lon: 107.1000 },
+      { name: 'Kab. Bogor',            lat: -6.4783, lon: 106.8628 },
+      { name: 'Kab. Ciamis',           lat: -7.3286, lon: 108.3524 },
+      { name: 'Kab. Cianjur',          lat: -6.8209, lon: 107.1386 },
+      { name: 'Kab. Cirebon',          lat: -6.7500, lon: 108.4833 },
+      { name: 'Kab. Garut',            lat: -7.2167, lon: 107.9063 },
+      { name: 'Kab. Indramayu',        lat: -6.3267, lon: 108.3191 },
+      { name: 'Kab. Karawang',         lat: -6.3167, lon: 107.3333 },
+      { name: 'Kab. Kuningan',         lat: -6.9760, lon: 108.4839 },
+      { name: 'Kab. Majalengka',       lat: -6.8333, lon: 108.2333 },
+      { name: 'Kab. Pangandaran',      lat: -7.6833, lon: 108.5000 },
+      { name: 'Kab. Purwakarta',       lat: -6.5567, lon: 107.4429 },
+      { name: 'Kab. Subang',           lat: -6.5667, lon: 107.7667 },
+      { name: 'Kab. Sukabumi',         lat: -6.9833, lon: 106.5500 },
+      { name: 'Kab. Sumedang',         lat: -6.8567, lon: 107.9219 },
+      { name: 'Kab. Tasikmalaya',      lat: -7.3500, lon: 108.1000 },
+    ],
+  },
+  {
+    id: 'jateng',
+    name: 'Jawa Tengah',
+    cities: [
+      { name: 'Kota Semarang',      lat: -6.9932, lon: 110.4203 },
+      { name: 'Kota Surakarta',     lat: -7.5561, lon: 110.8316 },
+      { name: 'Kota Salatiga',      lat: -7.3305, lon: 110.5084 },
+      { name: 'Kota Pekalongan',    lat: -6.8885, lon: 109.6752 },
+      { name: 'Kota Tegal',         lat: -6.8694, lon: 109.1402 },
+      { name: 'Kota Magelang',      lat: -7.4798, lon: 110.2179 },
+      { name: 'Kab. Banjarnegara',  lat: -7.3833, lon: 109.6833 },
+      { name: 'Kab. Banyumas',      lat: -7.4167, lon: 109.2333 },
+      { name: 'Kab. Batang',        lat: -6.9167, lon: 109.7333 },
+      { name: 'Kab. Blora',         lat: -6.9667, lon: 111.4167 },
+      { name: 'Kab. Boyolali',      lat: -7.5333, lon: 110.5833 },
+      { name: 'Kab. Brebes',        lat: -6.8717, lon: 108.9271 },
+      { name: 'Kab. Cilacap',       lat: -7.7333, lon: 109.0167 },
+      { name: 'Kab. Demak',         lat: -6.8933, lon: 110.6434 },
+      { name: 'Kab. Grobogan',      lat: -7.1033, lon: 110.9178 },
+      { name: 'Kab. Jepara',        lat: -6.5833, lon: 110.6667 },
+      { name: 'Kab. Karanganyar',   lat: -7.6000, lon: 111.0167 },
+      { name: 'Kab. Kebumen',       lat: -7.6667, lon: 109.6500 },
+      { name: 'Kab. Kendal',        lat: -6.9233, lon: 110.1972 },
+      { name: 'Kab. Klaten',        lat: -7.7000, lon: 110.6000 },
+      { name: 'Kab. Kudus',         lat: -6.8050, lon: 110.8367 },
+      { name: 'Kab. Magelang',      lat: -7.5833, lon: 110.2167 },
+      { name: 'Kab. Pati',          lat: -6.7500, lon: 111.0333 },
+      { name: 'Kab. Pekalongan',    lat: -6.9833, lon: 109.6333 },
+      { name: 'Kab. Pemalang',      lat: -6.8939, lon: 109.3760 },
+      { name: 'Kab. Purbalingga',   lat: -7.3833, lon: 109.3667 },
+      { name: 'Kab. Purworejo',     lat: -7.7167, lon: 110.0167 },
+      { name: 'Kab. Rembang',       lat: -6.7167, lon: 111.3500 },
+      { name: 'Kab. Semarang',      lat: -7.1333, lon: 110.4000 },
+      { name: 'Kab. Sragen',        lat: -7.4167, lon: 111.0333 },
+      { name: 'Kab. Sukoharjo',     lat: -7.6833, lon: 110.8333 },
+      { name: 'Kab. Tegal',         lat: -6.9833, lon: 109.1333 },
+      { name: 'Kab. Temanggung',    lat: -7.3167, lon: 110.1833 },
+      { name: 'Kab. Wonogiri',      lat: -7.8167, lon: 111.0167 },
+      { name: 'Kab. Wonosobo',      lat: -7.3667, lon: 109.9000 },
+    ],
+  },
+  {
+    id: 'diy',
+    name: 'DI Yogyakarta',
+    cities: [
+      { name: 'Kota Yogyakarta',    lat: -7.7971, lon: 110.3688 },
+      { name: 'Kab. Bantul',        lat: -7.8883, lon: 110.3283 },
+      { name: 'Kab. Gunungkidul',   lat: -7.9667, lon: 110.5833 },
+      { name: 'Kab. Kulon Progo',   lat: -7.8833, lon: 110.1667 },
+      { name: 'Kab. Sleman',        lat: -7.7167, lon: 110.3667 },
+    ],
+  },
+  {
+    id: 'jatim',
+    name: 'Jawa Timur',
+    cities: [
+      { name: 'Kota Surabaya',      lat: -7.2575, lon: 112.7521 },
+      { name: 'Kota Malang',        lat: -7.9666, lon: 112.6326 },
+      { name: 'Kota Blitar',        lat: -8.0957, lon: 112.1688 },
+      { name: 'Kota Kediri',        lat: -7.8157, lon: 112.0115 },
+      { name: 'Kota Madiun',        lat: -7.6299, lon: 111.5217 },
+      { name: 'Kota Mojokerto',     lat: -7.4714, lon: 111.4246 },
+      { name: 'Kota Pasuruan',      lat: -7.6448, lon: 112.9062 },
+      { name: 'Kota Probolinggo',   lat: -7.7543, lon: 113.2158 },
+      { name: 'Kota Batu',          lat: -7.8688, lon: 112.5267 },
+      { name: 'Kab. Bangkalan',     lat: -6.9069, lon: 112.7302 },
+      { name: 'Kab. Banyuwangi',    lat: -8.2196, lon: 114.3691 },
+      { name: 'Kab. Blitar',        lat: -8.1000, lon: 112.1667 },
+      { name: 'Kab. Bojonegoro',    lat: -7.1500, lon: 111.8833 },
+      { name: 'Kab. Bondowoso',     lat: -7.9167, lon: 113.8333 },
+      { name: 'Kab. Gresik',        lat: -7.1500, lon: 112.6500 },
+      { name: 'Kab. Jember',        lat: -8.1725, lon: 113.7004 },
+      { name: 'Kab. Jombang',       lat: -7.5500, lon: 112.2167 },
+      { name: 'Kab. Kediri',        lat: -7.8167, lon: 112.0000 },
+      { name: 'Kab. Lamongan',      lat: -7.1167, lon: 112.4167 },
+      { name: 'Kab. Lumajang',      lat: -8.1333, lon: 113.2167 },
+      { name: 'Kab. Madiun',        lat: -7.6500, lon: 111.4667 },
+      { name: 'Kab. Magetan',       lat: -7.6500, lon: 111.3333 },
+      { name: 'Kab. Malang',        lat: -8.1167, lon: 112.5667 },
+      { name: 'Kab. Mojokerto',     lat: -7.5000, lon: 111.5333 },
+      { name: 'Kab. Nganjuk',       lat: -7.6000, lon: 111.9000 },
+      { name: 'Kab. Ngawi',         lat: -7.4000, lon: 111.4500 },
+      { name: 'Kab. Pacitan',       lat: -8.1833, lon: 111.1000 },
+      { name: 'Kab. Pamekasan',     lat: -7.1571, lon: 113.4768 },
+      { name: 'Kab. Pasuruan',      lat: -7.6000, lon: 112.7833 },
+      { name: 'Kab. Ponorogo',      lat: -7.8667, lon: 111.4667 },
+      { name: 'Kab. Probolinggo',   lat: -7.7500, lon: 113.4167 },
+      { name: 'Kab. Sampang',       lat: -7.1879, lon: 113.2460 },
+      { name: 'Kab. Sidoarjo',      lat: -7.4500, lon: 112.7167 },
+      { name: 'Kab. Situbondo',     lat: -7.7060, lon: 114.0028 },
+      { name: 'Kab. Sumenep',       lat: -6.9928, lon: 113.8600 },
+      { name: 'Kab. Trenggalek',    lat: -8.0583, lon: 111.7083 },
+      { name: 'Kab. Tuban',         lat: -6.9000, lon: 112.0500 },
+      { name: 'Kab. Tulungagung',   lat: -8.0667, lon: 111.9000 },
+    ],
+  },
 ];
 
 // ── Varietas Padi (sumber: Deskripsi VUB Padi BB Padi/Balitbangtan 2015) ─────
@@ -54,6 +284,7 @@ const RICE_VARIETIES = [
 ];
 
 // State
+let currentProvinceIndex = 0;
 let currentCityIndex = 0;
 let currentVarietyId = 'umum';
 let lastWeatherUpdate = 0;
@@ -75,11 +306,61 @@ function mk(tag, cls, txt) {
   return e;
 }
 
-// ── City Selector ────────────────────────────────────────────────────────────
+function getCurrentCity() {
+  return PROVINCES[currentProvinceIndex].cities[currentCityIndex];
+}
 
-function initCitySelector() {
-  const sel = document.getElementById('city-selector');
-  KALBAR_CITIES.forEach((city, i) => {
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ── Location Persistence ─────────────────────────────────────────────────────
+
+function restoreLocation() {
+  try {
+    const savedProvId   = localStorage.getItem(PROVINCE_STORAGE_KEY);
+    const savedCityName = localStorage.getItem(CITY_STORAGE_KEY);
+    if (!savedProvId) return;
+    const pi = PROVINCES.findIndex(p => p.id === savedProvId);
+    if (pi < 0) return;
+    currentProvinceIndex = pi;
+    if (savedCityName) {
+      const ci = PROVINCES[pi].cities.findIndex(c => c.name === savedCityName);
+      if (ci >= 0) currentCityIndex = ci;
+    }
+  } catch (_) {}
+}
+
+function saveLocation() {
+  try {
+    localStorage.setItem(PROVINCE_STORAGE_KEY, PROVINCES[currentProvinceIndex].id);
+    localStorage.setItem(CITY_STORAGE_KEY, PROVINCES[currentProvinceIndex].cities[currentCityIndex].name);
+  } catch (_) {}
+}
+
+// ── Province & City Selectors ────────────────────────────────────────────────
+
+function initProvinceSelector() {
+  const sel = document.getElementById('province-selector');
+  PROVINCES.forEach((prov, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = prov.name;
+    if (i === currentProvinceIndex) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function populateCitySelector() {
+  const sel    = document.getElementById('city-selector');
+  const cities = PROVINCES[currentProvinceIndex].cities;
+  clearChildren(sel);
+  cities.forEach((city, i) => {
     const opt = document.createElement('option');
     opt.value = String(i);
     opt.textContent = city.name;
@@ -88,11 +369,67 @@ function initCitySelector() {
   });
 }
 
+function onProvinceChange() {
+  const sel = document.getElementById('province-selector');
+  currentProvinceIndex = parseInt(sel.value, 10);
+  currentCityIndex = 0;
+  populateCitySelector();
+  saveLocation();
+  lastWeatherUpdate = 0;
+  fetchAndRender();
+}
+
 function onCityChange() {
   const sel = document.getElementById('city-selector');
   currentCityIndex = parseInt(sel.value, 10);
+  saveLocation();
   lastWeatherUpdate = 0;
   fetchAndRender();
+}
+
+// ── GPS Geolocation ──────────────────────────────────────────────────────────
+
+function detectGeolocation() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    ({ coords }) => {
+      const { latitude, longitude } = coords;
+      let minDist = Infinity;
+      let nearestProv = 0;
+      let nearestCity = 0;
+
+      PROVINCES.forEach((prov, pi) => {
+        prov.cities.forEach((city, ci) => {
+          const d = haversineKm(latitude, longitude, city.lat, city.lon);
+          if (d < minDist) { minDist = d; nearestProv = pi; nearestCity = ci; }
+        });
+      });
+
+      if (nearestProv === currentProvinceIndex && nearestCity === currentCityIndex) return;
+
+      currentProvinceIndex = nearestProv;
+      currentCityIndex = nearestCity;
+
+      const provSel = document.getElementById('province-selector');
+      provSel.value = String(currentProvinceIndex);
+      populateCitySelector();
+      document.getElementById('city-selector').value = String(currentCityIndex);
+
+      saveLocation();
+
+      const geoStatus = document.getElementById('geo-status');
+      if (geoStatus) {
+        geoStatus.textContent = `📡 GPS: ${PROVINCES[currentProvinceIndex].cities[currentCityIndex].name}`;
+        geoStatus.classList.remove('hidden');
+        setTimeout(() => geoStatus.classList.add('hidden'), 6000);
+      }
+
+      lastWeatherUpdate = 0;
+      fetchAndRender();
+    },
+    null,
+    { timeout: 10000, maximumAge: 300000 }
+  );
 }
 
 // ── Variety Selector (searchable combobox) ───────────────────────────────────
@@ -350,7 +687,6 @@ function applyVarietyToDisease(disease, ctx) {
   const reactKey = diseaseReactionKey(disease.id);
   const reaction = reactKey ? variety[reactKey] : null;
   if (!reaction) {
-    // Tidak ada data genetik → tampilkan badge "tidak diuji" tapi tidak ubah level
     disease.detail = `${disease.detail} · ${variety.name.split(' ')[0]} ${variety.name.split(' ')[1] || ''}: data ${diseaseReactionTag(disease.id)} tidak diuji`;
     return disease;
   }
@@ -519,7 +855,6 @@ function getForecastBaseLevel(suhu_avg, rh_max, hujan7hari, disease) {
   }
 }
 
-// Tekanan ekstrem versi forecast (tanpa data kumulatif jam — pakai threshold rougher)
 function isForecastExtreme(diseaseId, suhu_avg, rh_max, hujan7hari) {
   switch (diseaseId) {
     case 'blast':  return rh_max >= 90 && hujan7hari >= 40 && suhu_avg >= 24 && suhu_avg <= 28;
@@ -759,7 +1094,7 @@ function showLoadError() {
 
 async function fetchAndRender() {
   try {
-    const city = KALBAR_CITIES[currentCityIndex];
+    const city = getCurrentCity();
     const url  = `${API_BASE_URL}/api/weather?lat=${city.lat}&lon=${city.lon}`;
     const res  = await fetch(url);
     const data = await res.json();
@@ -784,9 +1119,12 @@ async function fetchAndRender() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 function init() {
-  initCitySelector();
+  restoreLocation();
+  initProvinceSelector();
+  populateCitySelector();
   initVarietySelector();
   fetchAndRender();
+  detectGeolocation();
   weatherTimer = setInterval(() => {
     if (Date.now() - lastWeatherUpdate >= WEATHER_REFRESH_MS) fetchAndRender();
   }, 60000);

@@ -43,14 +43,23 @@
 
   <main class="max-w-2xl mx-auto px-4 py-5 space-y-4">
 
-    <!-- City Selector -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-center gap-3">
-      <span class="text-lg">📍</span>
-      <div class="flex-1">
-        <label class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Pilih Lokasi</label>
-        <select id="city-selector" onchange="onCityChange()"
-                class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
-        </select>
+    <!-- Location Selector -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-start gap-3">
+      <span class="text-lg mt-1">📍</span>
+      <div class="flex-1 space-y-2">
+        <div>
+          <label class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Provinsi</label>
+          <select id="province-selector" onchange="onProvinceChange()"
+                  class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Kab / Kota</label>
+          <select id="city-selector" onchange="onCityChange()"
+                  class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
+          </select>
+        </div>
+        <div id="geo-status" class="hidden text-xs text-green-600 font-medium"></div>
       </div>
     </div>
 
