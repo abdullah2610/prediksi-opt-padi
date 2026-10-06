@@ -288,11 +288,10 @@ let currentProvinceIndex = 0;
 let currentCityIndex = 0;
 let currentVarietyId = 'umum';
 let lastWeatherUpdate = 0;
-let weatherChart = null;
-let rainChart = null;
-let lastForecast = null;
-let lastWeatherSnapshot = null;
+let lastData = null;          // respons /api/weather terakhir
+let lastDiseases = null;      // hasil calculateDiseaseRisks terakhir
 let currentForecastDisease = 'all';
+let currentWeatherTab = 'rh';
 let weatherTimer = null;
 
 // ── Utilities ────────────────────────────────────────────────────────────────
@@ -341,274 +340,6 @@ function saveLocation() {
     localStorage.setItem(PROVINCE_STORAGE_KEY, PROVINCES[currentProvinceIndex].id);
     localStorage.setItem(CITY_STORAGE_KEY, PROVINCES[currentProvinceIndex].cities[currentCityIndex].name);
   } catch (_) {}
-}
-
-// ── Province & City Selectors ────────────────────────────────────────────────
-
-function initProvinceSelector() {
-  const sel = document.getElementById('province-selector');
-  PROVINCES.forEach((prov, i) => {
-    const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = prov.name;
-    if (i === currentProvinceIndex) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
-function populateCitySelector() {
-  const sel    = document.getElementById('city-selector');
-  const cities = PROVINCES[currentProvinceIndex].cities;
-  clearChildren(sel);
-  cities.forEach((city, i) => {
-    const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = city.name;
-    if (i === currentCityIndex) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
-function onProvinceChange() {
-  const sel = document.getElementById('province-selector');
-  currentProvinceIndex = parseInt(sel.value, 10);
-  currentCityIndex = 0;
-  populateCitySelector();
-  saveLocation();
-  lastWeatherUpdate = 0;
-  fetchAndRender();
-}
-
-function onCityChange() {
-  const sel = document.getElementById('city-selector');
-  currentCityIndex = parseInt(sel.value, 10);
-  saveLocation();
-  lastWeatherUpdate = 0;
-  fetchAndRender();
-}
-
-// ── GPS Geolocation ──────────────────────────────────────────────────────────
-
-function detectGeolocation() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition(
-    ({ coords }) => {
-      const { latitude, longitude } = coords;
-      let minDist = Infinity;
-      let nearestProv = 0;
-      let nearestCity = 0;
-
-      PROVINCES.forEach((prov, pi) => {
-        prov.cities.forEach((city, ci) => {
-          const d = haversineKm(latitude, longitude, city.lat, city.lon);
-          if (d < minDist) { minDist = d; nearestProv = pi; nearestCity = ci; }
-        });
-      });
-
-      if (nearestProv === currentProvinceIndex && nearestCity === currentCityIndex) return;
-
-      currentProvinceIndex = nearestProv;
-      currentCityIndex = nearestCity;
-
-      const provSel = document.getElementById('province-selector');
-      provSel.value = String(currentProvinceIndex);
-      populateCitySelector();
-      document.getElementById('city-selector').value = String(currentCityIndex);
-
-      saveLocation();
-
-      const geoStatus = document.getElementById('geo-status');
-      if (geoStatus) {
-        geoStatus.textContent = `📡 GPS: ${PROVINCES[currentProvinceIndex].cities[currentCityIndex].name}`;
-        geoStatus.classList.remove('hidden');
-        setTimeout(() => geoStatus.classList.add('hidden'), 6000);
-      }
-
-      lastWeatherUpdate = 0;
-      fetchAndRender();
-    },
-    null,
-    { timeout: 10000, maximumAge: 300000 }
-  );
-}
-
-// ── Variety Selector (searchable combobox) ───────────────────────────────────
-
-const VARIETY_GROUP_LABELS = {
-  default:     'Default',
-  rekomendasi: 'Rekomendasi tanam Kalbar (Tabel 1 & 1B)',
-  referensi:   'Varietas referensi / kontrol (Tabel 2)',
-};
-
-let varietyFilteredList = [];
-let varietyHighlightIndex = -1;
-
-function initVarietySelector() {
-  const stored = localStorage.getItem(VARIETY_STORAGE_KEY);
-  if (stored && RICE_VARIETIES.some(v => v.id === stored)) currentVarietyId = stored;
-
-  const trigger = document.getElementById('variety-trigger');
-  const search  = document.getElementById('variety-search');
-  const list    = document.getElementById('variety-list');
-  const wrap    = document.getElementById('variety-selector-wrap');
-
-  setVarietyTriggerLabel();
-  renderVarietyNote();
-
-  trigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (isVarietyPanelOpen()) closeVarietyPanel();
-    else openVarietyPanel();
-  });
-
-  search.addEventListener('input', () => {
-    varietyHighlightIndex = -1;
-    renderVarietyList(search.value.trim());
-  });
-
-  search.addEventListener('keydown', onVarietySearchKeydown);
-
-  document.addEventListener('click', (e) => {
-    if (!wrap.contains(e.target)) closeVarietyPanel();
-  });
-
-  list.addEventListener('mousedown', (e) => {
-    const btn = e.target.closest('[data-variety-id]');
-    if (!btn) return;
-    e.preventDefault();
-    selectVariety(btn.dataset.varietyId);
-  });
-}
-
-function setVarietyTriggerLabel() {
-  const label = document.getElementById('variety-label');
-  if (label) label.textContent = getCurrentVariety().name;
-}
-
-function isVarietyPanelOpen() {
-  return !document.getElementById('variety-panel').classList.contains('hidden');
-}
-
-function openVarietyPanel() {
-  const panel  = document.getElementById('variety-panel');
-  const search = document.getElementById('variety-search');
-  const trigger = document.getElementById('variety-trigger');
-  varietyHighlightIndex = -1;
-  search.value = '';
-  renderVarietyList('');
-  panel.classList.remove('hidden');
-  trigger.setAttribute('aria-expanded', 'true');
-  setTimeout(() => search.focus(), 0);
-}
-
-function closeVarietyPanel() {
-  const panel  = document.getElementById('variety-panel');
-  const search = document.getElementById('variety-search');
-  const trigger = document.getElementById('variety-trigger');
-  panel.classList.add('hidden');
-  trigger.setAttribute('aria-expanded', 'false');
-  search.value = '';
-  varietyHighlightIndex = -1;
-}
-
-function filterVarieties(query) {
-  const q = query.trim().toLowerCase();
-  if (!q) return RICE_VARIETIES;
-  return RICE_VARIETIES.filter(v =>
-    v.name.toLowerCase().includes(q) || v.id.toLowerCase().includes(q)
-  );
-}
-
-function renderVarietyList(query) {
-  const list = document.getElementById('variety-list');
-  varietyFilteredList = filterVarieties(query);
-  list.innerHTML = '';
-
-  if (varietyFilteredList.length === 0) {
-    list.innerHTML = '<p class="px-3 py-2 text-xs text-gray-500">Varietas tidak ditemukan</p>';
-    return;
-  }
-
-  let lastGroup = null;
-  varietyFilteredList.forEach((v, i) => {
-    if (v.group !== lastGroup) {
-      lastGroup = v.group;
-      const label = document.createElement('div');
-      label.className = 'px-3 py-1 text-xs font-semibold text-gray-500 bg-gray-50 border-b border-gray-100';
-      label.textContent = VARIETY_GROUP_LABELS[v.group] || v.group;
-      list.appendChild(label);
-    }
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.dataset.varietyId = v.id;
-    btn.dataset.listIndex = String(i);
-    btn.className = 'variety-option block w-full text-left px-3 py-2 text-sm hover:bg-green-50'
-      + (v.id === currentVarietyId ? ' bg-green-50 font-medium text-green-800' : ' text-gray-800');
-    btn.textContent = v.name;
-    list.appendChild(btn);
-  });
-  updateVarietyHighlight();
-}
-
-function updateVarietyHighlight() {
-  const list = document.getElementById('variety-list');
-  list.querySelectorAll('.variety-option').forEach(el => {
-    const hi = Number(el.dataset.listIndex) === varietyHighlightIndex;
-    el.classList.toggle('variety-option-highlight', hi);
-    if (hi) el.scrollIntoView({ block: 'nearest' });
-  });
-}
-
-function onVarietySearchKeydown(e) {
-  const n = varietyFilteredList.length;
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    if (!n) return;
-    varietyHighlightIndex = varietyHighlightIndex < n - 1 ? varietyHighlightIndex + 1 : 0;
-    updateVarietyHighlight();
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    if (!n) return;
-    varietyHighlightIndex = varietyHighlightIndex > 0 ? varietyHighlightIndex - 1 : n - 1;
-    updateVarietyHighlight();
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    if (varietyHighlightIndex >= 0 && varietyFilteredList[varietyHighlightIndex]) {
-      selectVariety(varietyFilteredList[varietyHighlightIndex].id);
-    } else if (n === 1) {
-      selectVariety(varietyFilteredList[0].id);
-    }
-  } else if (e.key === 'Escape') {
-    closeVarietyPanel();
-    document.getElementById('variety-trigger').focus();
-  }
-}
-
-function selectVariety(id) {
-  if (!RICE_VARIETIES.some(v => v.id === id)) return;
-  currentVarietyId = id;
-  setVarietyTriggerLabel();
-  closeVarietyPanel();
-  applyVarietyChange();
-}
-
-function applyVarietyChange() {
-  try { localStorage.setItem(VARIETY_STORAGE_KEY, currentVarietyId); } catch (_) {}
-  renderVarietyNote();
-  if (lastWeatherSnapshot) {
-    const { current, cumulative } = lastWeatherSnapshot;
-    const diseases = calculateDiseaseRisks(current.suhu, current.rh, current.hujan_7hari, cumulative);
-    updateRiskSection(diseases);
-  }
-  if (lastForecast) updateForecastSection(lastForecast);
-}
-
-function renderVarietyNote() {
-  const v   = getCurrentVariety();
-  const box = document.getElementById('variety-note');
-  if (!v.note) { box.classList.add('hidden'); box.textContent = ''; return; }
-  box.classList.remove('hidden');
-  box.textContent = v.note;
 }
 
 function getCurrentVariety() {
@@ -681,17 +412,20 @@ function diseaseReactionTag(diseaseId) {
 
 // Terapkan modifier varietas ke disease object hasil base cuaca
 function applyVarietyToDisease(disease, ctx) {
+  disease.baseLevel = disease.level;
   const variety  = getCurrentVariety();
   if (variety.id === 'umum') return disease;
 
   const reactKey = diseaseReactionKey(disease.id);
   const reaction = reactKey ? variety[reactKey] : null;
+  disease.reaction = reaction;
   if (!reaction) {
     disease.detail = `${disease.detail} · ${variety.name.split(' ')[0]} ${variety.name.split(' ')[1] || ''}: data ${diseaseReactionTag(disease.id)} tidak diuji`;
     return disease;
   }
 
   const extreme  = isExtremePressure(disease.id, ctx);
+  disease.extreme = extreme;
   const mod      = adaptiveModifier(reaction, extreme);
   const baseNum  = LEVEL_TO_NUM[disease.level] || 1;
   const finalNum = Math.max(1, Math.min(3, baseNum + mod));
@@ -930,199 +664,727 @@ function getHujanInfo(mm) {
   return               { label: 'Sangat lebat, waspadai genangan', color: 'text-red-600' };
 }
 
-function setLabel(id, info) {
-  const el = document.getElementById(id);
-  el.textContent = info.label;
-  el.className   = `text-xs mt-1 font-medium ${info.color}`;
-}
+// ── Konten OPT (tampilan) ────────────────────────────────────────────────────
 
-function updateWeatherCards(current) {
-  document.getElementById('weather-suhu').textContent    = current.suhu;
-  document.getElementById('weather-rh').textContent      = current.rh;
-  document.getElementById('weather-tekanan').textContent = current.tekanan ?? '--';
-  document.getElementById('weather-hujan').textContent   = current.hujan_7hari;
-  setLabel('weather-suhu-label',    getSuhuInfo(current.suhu));
-  setLabel('weather-rh-label',      getRhInfo(current.rh));
-  setLabel('weather-tekanan-label', getPressureInfo(current.tekanan));
-  setLabel('weather-hujan-label',   getHujanInfo(current.hujan_7hari));
-  document.getElementById('weather-section').classList.remove('hidden');
-}
+const LV       = { RENDAH: 0, SEDANG: 1, TINGGI: 2 };
+const LV_TEXT  = ['Rendah', 'Sedang', 'Tinggi'];
+const LV_CLASS = ['lv-low', 'lv-med', 'lv-high'];
+const OPT_ORDER = ['blast', 'hdb', 'bercak', 'wereng'];
+const DAY_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const DAY_LONG  = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const MONTHS    = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
 
-function updateRiskSection(diseases) {
-  const container = document.getElementById('risk-cards');
-  clearChildren(container);
-  diseases.forEach(d => {
-    const card  = mk('div', `rounded-lg border px-3 py-2 flex items-center gap-2 ${d.cls}`);
-    const icon  = mk('span', 'text-base flex-shrink-0', d.icon);
-    const body  = mk('div', 'flex-1 min-w-0');
-    const label = mk('div', 'font-semibold text-xs', `${d.name} — ${d.level}`);
-    const det   = mk('div', 'text-xs opacity-75 truncate', d.detail);
-    body.appendChild(label);
-    body.appendChild(det);
-    card.appendChild(icon);
-    card.appendChild(body);
-    container.appendChild(card);
-  });
-  document.getElementById('risk-section').classList.remove('hidden');
-}
+const OPT_INFO = {
+  blast: {
+    short: 'Blast', name: 'Blast padi', inline: 'blast', latin: 'Pyricularia oryzae',
+    heroAction: 'Amati daun dan leher malai pagi hari.',
+    actions: [
+      ['HARI INI', 'Amati daun dan leher malai pagi hari. Cari bercak belah ketupat berpusat abu-abu.'],
+      ['MINGGU INI', 'Tunda tambahan urea. Batasi total pupuk N maksimal 200 kg urea/ha.'],
+      ['BILA ADA GEJALA', 'Aplikasi fungisida anjuran saat bunting hingga keluar malai, sesuai label dan saran POPT.'],
+      ['PENCEGAHAN', 'Pengairan berselang dan jajar legowo agar tajuk tidak lembab.'],
+    ],
+    symptoms: [
+      ['Bercak belah ketupat', 'Tengah abu-abu keputihan, tepi coklat, ujung meruncing.'],
+      ['Blast leher', 'Pangkal malai busuk coklat kehitaman, malai patah atau hampa.'],
+      ['Blast buku', 'Buku batang menghitam dan mudah patah.'],
+    ],
+    model: 'Dihitung dari jam dengan RH ≥85% pada suhu 24–28°C selama 7 hari terakhir. Satu hari dihitung mendukung bila kondisi itu terjadi minimal 8 jam. Tinggi jika ≥3 hari mendukung dan hujan ≥20 mm/7 hari. Sedang jika ≥24 jam mendukung atau ≥10 jam lembab berturut-turut. Lalu digeser sesuai ketahanan varietas.',
+  },
+  hdb: {
+    short: 'HDB', name: 'Hawar daun bakteri', inline: 'HDB', latin: 'Xanthomonas oryzae pv. oryzae',
+    heroAction: 'Periksa tepi daun yang menguning setelah hujan.',
+    actions: [
+      ['HARI INI', 'Periksa ujung dan tepi daun yang menguning bergelombang, terutama setelah hujan angin.'],
+      ['MINGGU INI', 'Keringkan petak berkala (pengairan berselang). Hindari air mengalir dari petak terserang.'],
+      ['PEMUPUKAN', 'Jangan tambah N. Pastikan kalium cukup untuk menguatkan jaringan daun.'],
+      ['PENCEGAHAN', 'Bersihkan gulma inang dan sisa jerami terinfeksi.'],
+    ],
+    symptoms: [
+      ['Hawar dari tepi', 'Garis kuning dari ujung atau tepi daun, bergelombang, lalu kering keabu-abuan.'],
+      ['Butiran eksudat', 'Pagi hari tampak tetes kuning seperti embun pada bagian terinfeksi.'],
+      ['Kresek', 'Pada tanaman muda, daun layu dan seluruh rumpun mengering.'],
+    ],
+    model: 'Jam hujan (>1 mm/jam) selama 7 hari dan jam RH ≥85% selama 72 jam terakhir. Tinggi jika ≥15 jam hujan dan ≥20 jam RH tinggi. Sedang jika ≥8 jam hujan dan ≥10 jam RH tinggi. Lalu digeser sesuai ketahanan varietas (patotipe III).',
+  },
+  bercak: {
+    short: 'Bercak', name: 'Bercak coklat', inline: 'bercak coklat', latin: 'Helminthosporium oryzae',
+    heroAction: 'Amati daun bawah dan cek kecukupan kalium.',
+    actions: [
+      ['MINGGU INI', 'Amati daun bawah. Bercak banyak menandakan tanaman kekurangan hara.'],
+      ['PEMUPUKAN', 'Lengkapi kalium sesuai rekomendasi lokasi. Pupuk berimbang lebih efektif dari fungisida.'],
+      ['MUSIM BERIKUT', 'Gunakan benih sehat dan perlakuan benih.'],
+    ],
+    symptoms: [
+      ['Bercak oval coklat', 'Bulat lonjong seukuran biji wijen, kadang berpusat abu-abu.'],
+      ['Bercak pada gabah', 'Kulit gabah bernoda coklat kehitaman, mutu turun.'],
+    ],
+    model: 'Jumlah hari dengan RH ≥80% lebih dari 10 jam dalam 7 hari terakhir. Sedang jika ≥3 hari dan hujan ≥15 mm/7 hari. Belum ada data ketahanan varietas untuk bercak coklat.',
+  },
+  wereng: {
+    short: 'Wereng', name: 'Wereng batang coklat', inline: 'wereng coklat', latin: 'Nilaparvata lugens',
+    heroAction: 'Tepuk pangkal rumpun dan hitung wereng per rumpun.',
+    actions: [
+      ['RUTIN', 'Tepuk pangkal rumpun di atas nampan, hitung wereng per rumpun tiap minggu.'],
+      ['BILA MELEWATI AMBANG', 'Hubungi POPT. Gunakan insektisida selektif sesuai anjuran, bukan spektrum luas.'],
+      ['PENCEGAHAN', 'Jajar legowo, hindari N berlebih, jaga musuh alami seperti laba-laba.'],
+    ],
+    symptoms: [
+      ['Koloni di pangkal', 'Serangga coklat kecil berkumpul di pangkal batang dekat air.'],
+      ['Puso (hopperburn)', 'Tanaman menguning lalu kering membentuk lingkaran di petak.'],
+    ],
+    model: 'Jam kondisi optimal (RH ≥78%, suhu 22–32°C) selama 7 hari. Tinggi jika ≥80 jam dan hujan <60 mm/7 hari. Sedang jika ≥40 jam dan hujan <80 mm. Hujan ≥80 mm/7 hari menekan populasi.',
+  },
+};
 
-function showWeatherTab(tab) {
-  document.getElementById('weather-chart-suhu-rh').classList.toggle('hidden', tab !== 'suhu-rh');
-  document.getElementById('weather-chart-hujan').classList.toggle('hidden',   tab !== 'hujan');
-  document.getElementById('wtab-suhu-rh').classList.toggle('active', tab === 'suhu-rh');
-  document.getElementById('wtab-hujan').classList.toggle('active',   tab === 'hujan');
-}
+// ── DOM helpers ──────────────────────────────────────────────────────────────
 
-function updateWeatherChart(history) {
-  const labels   = history.map(r => new Date(r.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }));
-  const suhuData = history.map(r => r.suhu);
-  const rhData   = history.map(r => r.rh);
-  const ctx      = document.getElementById('weatherChart').getContext('2d');
-  if (weatherChart) {
-    weatherChart.data.labels = labels;
-    weatherChart.data.datasets[0].data = suhuData;
-    weatherChart.data.datasets[1].data = rhData;
-    weatherChart.update();
-  } else {
-    weatherChart = new Chart(ctx, {
-      type: 'line',
-      data: { labels, datasets: [
-        { label:'Suhu (°C)', data:suhuData, borderColor:'rgb(239,68,68)',  backgroundColor:'rgba(239,68,68,0.08)',  tension:0.4, fill:false, pointRadius:2, yAxisID:'yLeft'  },
-        { label:'RH (%)',    data:rhData,   borderColor:'rgb(59,130,246)', backgroundColor:'rgba(59,130,246,0.08)', tension:0.4, fill:false, pointRadius:2, yAxisID:'yRight' },
-      ]},
-      options: {
-        responsive:true, maintainAspectRatio:false,
-        interaction:{ mode:'index', intersect:false },
-        plugins:{ legend:{ display:true, position:'top', labels:{ boxWidth:10, font:{ size:11 } } } },
-        scales: {
-          yLeft:  { type:'linear', position:'left',  min:20, max:40,  ticks:{ callback:v => v+'°C', color:'rgb(239,68,68)',  font:{size:10} }, grid:{ color:'rgba(0,0,0,0.05)' } },
-          yRight: { type:'linear', position:'right', min:40, max:100, ticks:{ callback:v => v+'%',  color:'rgb(59,130,246)', font:{size:10} }, grid:{ drawOnChartArea:false } },
-          x: { ticks:{ maxRotation:45, minRotation:45, maxTicksLimit:8, font:{size:10} } },
-        },
-      },
-    });
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    for (const k in attrs) {
+      const v = attrs[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k === 'style') e.style.cssText = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    }
   }
-  updateRainChart(history);
-  document.getElementById('weather-chart-section').classList.remove('hidden');
+  (children || []).forEach(c => { if (c !== null && c !== undefined) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+  return e;
 }
 
-function updateRainChart(history) {
-  const labels = history.map(r => new Date(r.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' }));
-  const values = history.map(r => r.hujan_mm);
-  const ctx    = document.getElementById('rainChart').getContext('2d');
-  if (rainChart) {
-    rainChart.data.labels = labels;
-    rainChart.data.datasets[0].data = values;
-    rainChart.update();
-  } else {
-    rainChart = new Chart(ctx, {
-      type:'bar',
-      data:{ labels, datasets:[{ label:'Hujan (mm/jam)', data:values, backgroundColor:'rgba(59,130,246,0.6)', borderColor:'rgb(59,130,246)', borderWidth:1 }] },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false } },
-        scales:{
-          y:{ beginAtZero:true, ticks:{ callback:v => v+'mm', font:{size:10} } },
-          x:{ ticks:{ maxRotation:45, minRotation:45, maxTicksLimit:8, font:{size:10} } },
-        },
-      },
-    });
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function $(id) { return document.getElementById(id); }
+
+function fmtNum(n) {
+  if (n === null || n === undefined || Number.isNaN(+n)) return '--';
+  return String(n).replace('.', ',');
+}
+
+function joinNames(arr) {
+  if (arr.length <= 1) return arr.join('');
+  return arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
+}
+
+function parseDay(dateStr) { return new Date(dateStr + 'T00:00:00'); }
+
+function varietyShortName(v) { return v.name.split(' (')[0].split(' — ')[0]; }
+
+function cityLabel() {
+  return `${getCurrentCity().name}, ${PROVINCES[currentProvinceIndex].name}`;
+}
+
+// ── Model helpers ────────────────────────────────────────────────────────────
+
+function forecastLevel(day, disease) {
+  const suhuAvg = +((day.suhu_max + day.suhu_min) / 2).toFixed(0);
+  return LV[getForecastRiskLevel(suhuAvg, day.rh_max, day.hujan_7hari, disease)];
+}
+
+function diseaseById(id) {
+  return (lastDiseases || []).find(d => d.id === id);
+}
+
+function optSummary(id) {
+  const cur = lastData.current;
+  const cum = lastData.cumulative;
+  const h = fmtNum(cur.hujan_7hari);
+  if (!cum) return `Dihitung dari kondisi saat ini: RH ${cur.rh}%, suhu ${fmtNum(cur.suhu)}°C, hujan 7 hari ${h} mm. Data kumulatif jam-per-jam belum tersedia.`;
+  switch (id) {
+    case 'blast':
+      return `Kondisi pendukung blast (RH ≥85% pada suhu 24–28°C) terjadi ${cum.blast_favorable_days} dari 7 hari terakhir, total ${cum.blast_fav_hours} jam. Hujan 7 hari ${h} mm.`;
+    case 'hdb':
+      return `${cum.hdb_rain_hours_7d} jam hujan dalam 7 hari dan ${cum.rh85_hours_72h} jam RH ≥85% dalam 72 jam terakhir. Bakteri menyebar lewat percikan air dan luka daun.`;
+    case 'bercak':
+      return `${cum.humid80_days} hari dengan RH ≥80% lebih dari 10 jam, hujan 7 hari ${h} mm. Lebih berat pada lahan kurang kalium dan silika.`;
+    case 'wereng':
+      return `${cum.warm_humid_hours_7d} jam kondisi optimal wereng dalam 7 hari terakhir.` +
+        (cur.hujan_7hari >= 80 ? ' Hujan lebat ikut menekan populasi.' : ' Tetap pantau pangkal batang.');
+  }
+  return '';
+}
+
+function optMeters(id) {
+  const cur = lastData.current;
+  const cum = lastData.cumulative;
+  const h = +cur.hujan_7hari || 0;
+  if (!cum) {
+    return [
+      { label: 'Kelembaban saat ini', value: cur.rh, unit: '%', max: 100, thr: 85, note: 'Ambang lembab 85%' },
+      { label: 'Curah hujan 7 hari', value: h, unit: ' mm', max: Math.max(100, h), thr: 20, note: 'Data jam-per-jam tidak tersedia' },
+    ];
+  }
+  switch (id) {
+    case 'blast': return [
+      { label: 'Hari kondisi mendukung (RH ≥85%, 24–28°C)', value: cum.blast_favorable_days, unit: ' hari', max: 7, thr: 3, note: 'Garis = ambang tinggi 3 hari' },
+      { label: 'Curah hujan 7 hari', value: h, unit: ' mm', max: Math.max(100, h), thr: 20, note: 'Ambang tinggi 20 mm' },
+      { label: 'Jam lembab berturut-turut terpanjang', value: cum.max_consec_humid_hours, unit: ' jam', max: Math.max(24, cum.max_consec_humid_hours), thr: 10, note: 'Ambang sedang 10 jam' },
+    ];
+    case 'hdb': return [
+      { label: 'Jam hujan >1 mm (7 hari)', value: cum.hdb_rain_hours_7d, unit: ' jam', max: Math.max(40, cum.hdb_rain_hours_7d), thr: 15, note: 'Ambang tinggi 15 jam, sedang 8 jam' },
+      { label: 'Jam RH ≥85% (72 jam)', value: cum.rh85_hours_72h, unit: ' jam', max: 72, thr: 20, note: 'Ambang tinggi 20 jam, sedang 10 jam' },
+    ];
+    case 'bercak': return [
+      { label: 'Hari RH ≥80% lebih dari 10 jam', value: cum.humid80_days, unit: ' hari', max: 7, thr: 3, note: 'Ambang sedang 3 hari' },
+      { label: 'Curah hujan 7 hari', value: h, unit: ' mm', max: Math.max(100, h), thr: 15, note: 'Ambang sedang 15 mm' },
+    ];
+    case 'wereng': return [
+      { label: 'Jam kondisi optimal (RH ≥78%, 22–32°C)', value: cum.warm_humid_hours_7d, unit: ' jam', max: 168, thr: 80, note: 'Ambang tinggi 80 jam, sedang 40 jam' },
+      { label: 'Curah hujan 7 hari', value: h, unit: ' mm', max: Math.max(120, h), thr: 80, note: 'Di atas 80 mm menekan populasi' },
+    ];
+  }
+  return [];
+}
+
+function varietyExplanation(d) {
+  const v = getCurrentVariety();
+  if (v.id === 'umum') return { text: 'Varietas belum dipilih, jadi level belum disesuaikan dengan ketahanan varietas.', pick: true };
+  const name = varietyShortName(v);
+  if (!d.reaction) return { text: `${name}: ketahanan terhadap ${diseaseReactionTag(d.id)} tidak diuji, jadi level tidak disesuaikan.` };
+  const base = LV_TEXT[LV[d.baseLevel]].toLowerCase();
+  const fin  = LV_TEXT[LV[d.level]].toLowerCase();
+  const shift = base === fin ? `tetap ${fin}` : `${base} → ${fin}`;
+  return {
+    text: `${name} ${REACTION_LABEL[d.reaction].toLowerCase()} ${diseaseReactionTag(d.id)}: level cuaca ${shift}` +
+      `${d.extreme ? (d.reaction === 'R' || d.reaction === 'AT' ? ' (tekanan cuaca ekstrem, efek ketahanan dikurangi)' : ' (tekanan cuaca ekstrem)') : ''}. Ketahanan bisa patah pada ras atau patotipe lokal bila pupuk N berlebih.`,
+  };
+}
+
+// ── Render: shared ───────────────────────────────────────────────────────────
+
+function renderHeaderBits() {
+  const v = getCurrentVariety();
+  $('loc-city').textContent = cityLabel();
+  $('loc-variety').textContent = v.id === 'umum' ? 'Varietas: belum dipilih' : `Varietas: ${varietyShortName(v)}`;
+  $('detail-sub').textContent = `${getCurrentCity().name} · ${v.id === 'umum' ? 'varietas umum' : varietyShortName(v)}`;
+}
+
+function setStatus(kind, message) {
+  const box = $('status');
+  clearChildren(box);
+  box.hidden = !kind;
+  if (!kind) return;
+  box.className = 'status status-' + kind;
+  box.appendChild(el('span', { text: message }));
+  if (kind === 'error') {
+    box.appendChild(el('button', { type: 'button', class: 'btn-ghost', text: 'Coba lagi', onclick: () => { lastWeatherUpdate = 0; fetchAndRender(); } }));
   }
 }
 
-function changeForecastTab(disease) {
-  currentForecastDisease = disease;
-  ['all','blast','bercak','hdb','wereng'].forEach(id => {
-    const btn = document.getElementById('ftab-' + id);
-    if (btn) btn.classList.toggle('active', id === disease);
+function levelDot(lv, cls) {
+  return el('span', { class: `dot ${LV_CLASS[lv]} ${cls || ''}`, 'aria-hidden': 'true' });
+}
+
+// ── Render: Beranda ──────────────────────────────────────────────────────────
+
+function renderHero() {
+  const ds = lastDiseases;
+  const highs = ds.filter(d => d.level === 'TINGGI');
+  const meds  = ds.filter(d => d.level === 'SEDANG');
+  const focus = highs.length ? highs : meds;
+  const names = focus.map(d => OPT_INFO[d.id].inline);
+
+  let title;
+  if (highs.length) title = `Waspada ${joinNames(names)}`;
+  else if (meds.length) title = `Siaga ${joinNames(names)}`;
+  else title = 'Kondisi relatif aman';
+
+  const cur = lastData.current, cum = lastData.cumulative;
+  const parts = [];
+  if (cum) parts.push(`Udara sangat lembab (RH ≥85% minimal 8 jam) pada ${cum.high_humid_days} dari 7 hari terakhir, hujan ${fmtNum(cur.hujan_7hari)} mm.`);
+  else parts.push(`Saat ini RH ${cur.rh}%, suhu ${fmtNum(cur.suhu)}°C, hujan 7 hari ${fmtNum(cur.hujan_7hari)} mm.`);
+
+  const fc = lastData.forecast || [];
+  const next = fc.slice(1, 8).map((day, i) => ({ i: i + 1, day, lv: forecastLevel(day, 'all') }));
+  const highDays = next.filter(x => x.lv === 2);
+  if (highDays.length) {
+    const f = highDays[0];
+    const fd = parseDay(f.day.date);
+    const when = f.i === 1 ? 'besok' : `${DAY_LONG[fd.getDay()]} ${fd.getDate()} ${MONTHS[fd.getMonth()]}`;
+    const who = OPT_ORDER.filter(id => highDays.some(x => forecastLevel(x.day, id) === 2)).map(id => OPT_INFO[id].inline);
+    parts.push(`Prakiraan 7 hari ke depan: ${highDays.length} hari berisiko tinggi (${joinNames(who)}), mulai ${when}.`);
+  } else if (fc.length) {
+    parts.push('Prakiraan 7 hari ke depan: tidak ada hari berisiko tinggi.');
+  }
+
+  let todo;
+  if (focus.length) {
+    todo = focus.map(d => OPT_INFO[d.id].heroAction);
+    if (focus.some(d => d.id === 'blast' || d.id === 'hdb')) todo.push('Tunda tambahan urea, pertahankan pengairan berselang.');
+  } else {
+    todo = ['Lanjutkan pengamatan rutin seminggu sekali.'];
+  }
+
+  $('hero-title').textContent = title;
+  $('hero-text').textContent = parts.join(' ');
+  $('hero-todo').textContent = todo.join(' ');
+  $('hero').classList.remove('is-loading');
+}
+
+function renderRiskGrid() {
+  const grid = $('risk-grid');
+  clearChildren(grid);
+  const fc = (lastData.forecast || []).slice(0, 7);
+  OPT_ORDER.forEach(id => {
+    const d = diseaseById(id);
+    const lv = LV[d.level];
+    const bars = el('span', { class: 'bars', 'aria-hidden': 'true' },
+      fc.map(day => {
+        const l = forecastLevel(day, id);
+        return el('span', { class: `bar ${LV_CLASS[l]} h${l}` });
+      }));
+    const card = el('a', { class: 'risk-card', href: `#/opt/${id}`, 'aria-label': `${OPT_INFO[id].name}: risiko ${LV_TEXT[lv].toLowerCase()}. Lihat detail.` }, [
+      el('span', { class: `pill ${LV_CLASS[lv]}`, text: LV_TEXT[lv].toUpperCase() }),
+      el('span', { class: 'risk-name', text: OPT_INFO[id].name }),
+      bars,
+    ]);
+    grid.appendChild(card);
   });
-  if (lastForecast) updateForecastSection(lastForecast);
 }
 
-function updateForecastSection(forecast) {
-  if (!forecast || !forecast.length) return;
-  lastForecast = forecast;
-  const container = document.getElementById('forecast-scroll');
-  clearChildren(container);
+function renderWeather() {
+  const c = lastData.current;
+  const items = [
+    ['Suhu', fmtNum(c.suhu), '°C', getSuhuInfo(c.suhu).label],
+    ['Kelembaban', fmtNum(c.rh), '%', getRhInfo(c.rh).label],
+    ['Hujan 7 hari', fmtNum(c.hujan_7hari), 'mm', getHujanInfo(c.hujan_7hari).label],
+    ['Tekanan', fmtNum(c.tekanan), 'hPa', getPressureInfo(c.tekanan).label],
+  ];
+  const box = $('weather-metrics');
+  clearChildren(box);
+  items.forEach(([label, val, unit, hint]) => {
+    box.appendChild(el('div', { class: 'metric' }, [
+      el('span', { class: 'metric-label', text: label }),
+      el('span', { class: 'metric-value' }, [val, el('span', { class: 'unit', text: ' ' + unit })]),
+      el('span', { class: 'metric-hint', text: hint }),
+    ]));
+  });
+  renderWeatherChart();
+}
 
-  const dayNames   = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-  const monthNames = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
-  const riskColors = { TINGGI:'bg-red-50 border-red-400', SEDANG:'bg-yellow-50 border-yellow-400', RENDAH:'bg-green-50 border-green-400' };
-  const riskIcons  = { TINGGI:'🚨', SEDANG:'⚠️', RENDAH:'🌿' };
-  const riskText   = { TINGGI:'text-red-700', SEDANG:'text-yellow-700', RENDAH:'text-green-700' };
+function renderWeatherChart() {
+  const hist = (lastData && lastData.history) || [];
+  const svg = $('weather-svg');
+  while (svg.firstChild) svg.removeChild(svg.firstChild);
+  ['rh', 'suhu', 'hujan'].forEach(t => {
+    const b = $('wtab-' + t);
+    b.setAttribute('aria-selected', String(t === currentWeatherTab));
+    b.classList.toggle('active', t === currentWeatherTab);
+  });
+  if (!hist.length) return;
 
-  forecast.forEach((day, i) => {
-    const date    = new Date(day.date + 'T00:00:00');
-    const suhuAvg = +((day.suhu_max + day.suhu_min) / 2).toFixed(0);
-    const level   = getForecastRiskLevel(suhuAvg, day.rh_max, day.hujan_7hari, currentForecastDisease);
-    const rainIcon = day.hujan > 8 ? '🌧️' : day.hujan > 1 ? '🌦️' : '☀️';
-    const isToday  = i === 0;
+  const W = 320, H = 72, n = hist.length;
+  const x = i => (n === 1 ? W : (i / (n - 1)) * W);
+  let caption = '';
+  if (currentWeatherTab === 'hujan') {
+    const vals = hist.map(r => +r.hujan_mm || 0);
+    const max = Math.max(2, ...vals);
+    const bw = W / n;
+    vals.forEach((v, i) => {
+      const h = (v / max) * (H - 6);
+      svg.appendChild(svgEl('rect', { x: (i * bw + 1).toFixed(1), y: (H - h).toFixed(1), width: Math.max(1, bw - 2).toFixed(1), height: Math.max(0, h).toFixed(1), rx: 1.5, class: 'chart-bar' }));
+    });
+    caption = `maks ${fmtNum(Math.max(...vals))} mm/jam`;
+  } else {
+    const key = currentWeatherTab === 'rh' ? 'rh' : 'suhu';
+    const [lo, hi] = key === 'rh' ? [40, 100] : [20, 38];
+    const y = v => H - ((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * H;
+    if (key === 'rh') {
+      svg.appendChild(svgEl('line', { x1: 0, x2: W, y1: y(85).toFixed(1), y2: y(85).toFixed(1), class: 'chart-ref' }));
+      caption = 'garis putus = 85%';
+    } else {
+      svg.appendChild(svgEl('rect', { x: 0, width: W, y: y(28).toFixed(1), height: (y(24) - y(28)).toFixed(1), class: 'chart-band' }));
+      caption = 'pita = 24–28°C (optimal blast)';
+    }
+    const pts = hist.map((r, i) => `${x(i).toFixed(1)},${y(+r[key]).toFixed(1)}`).join(' ');
+    svg.appendChild(svgEl('polyline', { points: pts, class: 'chart-line' }));
+  }
+  $('weather-caption').textContent = caption;
+  const titles = { rh: 'Kelembaban 24 jam', suhu: 'Suhu 24 jam', hujan: 'Hujan 24 jam' };
+  $('weather-chart-title').textContent = titles[currentWeatherTab];
+  svg.setAttribute('aria-label', titles[currentWeatherTab]);
 
-    const card = mk('div', `flex-shrink-0 w-[68px] rounded-lg border-2 p-1.5 text-center ${riskColors[level]}${isToday ? ' ring-2 ring-green-500' : ''}`);
-    card.title = `${day.date} — Risiko ${level}\nRH maks ${day.rh_max}%, Hujan 7hr ${day.hujan_7hari}mm`;
-    card.appendChild(mk('div', 'text-xs font-bold text-gray-700 leading-tight', isToday ? 'Hari ini' : dayNames[date.getDay()]));
-    card.appendChild(mk('div', 'text-xs text-gray-500', `${date.getDate()} ${monthNames[date.getMonth()]}`));
-    card.appendChild(mk('div', 'text-lg my-0.5', rainIcon));
-    card.appendChild(mk('div', 'text-xs font-semibold text-gray-800', `${day.suhu_max}°/${day.suhu_min}°`));
-    card.appendChild(mk('div', 'text-xs text-gray-500', `${day.rh_max}%`));
-    card.appendChild(mk('div', 'text-base mt-0.5', riskIcons[level]));
-    card.appendChild(mk('div', `text-xs font-bold leading-tight ${riskText[level]}`, level));
-    container.appendChild(card);
+  const ax = $('weather-axis');
+  clearChildren(ax);
+  const idx = [0, Math.round((n - 1) / 4), Math.round((n - 1) / 2), Math.round((3 * (n - 1)) / 4)];
+  idx.forEach(i => ax.appendChild(el('span', { text: new Date(hist[i].created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) })));
+  ax.appendChild(el('span', { text: 'Kini' }));
+}
+
+function dayCard(day, i, lv, extra) {
+  const d = parseDay(day.date);
+  const today = i === 0;
+  return el('div', {
+    class: 'day' + (today ? ' today' : ''),
+    title: `${day.date}: risiko ${LV_TEXT[lv].toLowerCase()}. Suhu ${day.suhu_min}–${day.suhu_max}°C, RH maks ${day.rh_max}%, hujan ${day.hujan} mm (7 hari ${day.hujan_7hari} mm)`,
+  }, [
+    el('span', { class: 'day-name', text: today ? 'Hari ini' : DAY_SHORT[d.getDay()] }),
+    el('span', { class: 'day-date', text: `${d.getDate()} ${MONTHS[d.getMonth()]}` }),
+    levelDot(lv, 'dot-lg'),
+    el('span', { class: 'sr-only', text: `Risiko ${LV_TEXT[lv]}` }),
+    el('span', { class: 'day-extra', text: extra }),
+  ]);
+}
+
+function renderForecast() {
+  ['all', 'blast', 'hdb', 'bercak', 'wereng'].forEach(id => {
+    const b = $('ftab-' + id);
+    b.classList.toggle('active', id === currentForecastDisease);
+    b.setAttribute('aria-pressed', String(id === currentForecastDisease));
+  });
+  const row = $('forecast-row');
+  clearChildren(row);
+  (lastData.forecast || []).forEach((day, i) => {
+    row.appendChild(dayCard(day, i, forecastLevel(day, currentForecastDisease), `${fmtNum(day.hujan)} mm`));
+  });
+}
+
+function renderHome() {
+  renderHero();
+  renderRiskGrid();
+  renderWeather();
+  renderForecast();
+}
+
+// ── Render: Detail OPT ───────────────────────────────────────────────────────
+
+let currentDetailId = null;
+
+function renderDetail(id) {
+  currentDetailId = id;
+  const info = OPT_INFO[id];
+
+  const tabs = $('detail-tabs');
+  clearChildren(tabs);
+  OPT_ORDER.forEach(k => {
+    const on = k === id;
+    const d = lastDiseases && diseaseById(k);
+    tabs.appendChild(el('a', { href: `#/opt/${k}`, class: 'tab' + (on ? ' active' : ''), 'aria-current': on ? 'page' : null }, [
+      d ? levelDot(LV[d.level]) : null,
+      OPT_INFO[k].short,
+    ]));
   });
 
-  document.getElementById('forecast-section').classList.remove('hidden');
+  $('detail-name').textContent = info.name;
+  $('detail-latin').textContent = info.latin;
+  $('detail-model').textContent = info.model;
+  $('detail-model-title').textContent = `Ambang model ${info.short}`;
+  $('detail-forecast-title').textContent = `Prakiraan 14 hari · ${info.short}`;
+
+  const actions = $('detail-actions');
+  clearChildren(actions);
+  info.actions.forEach(([when, text], i) => {
+    actions.appendChild(el('li', { class: 'action' }, [
+      el('span', { class: 'action-n', text: String(i + 1), 'aria-hidden': 'true' }),
+      el('span', { class: 'action-body' }, [el('span', { class: 'action-when', text: when }), el('span', { text })]),
+    ]));
+  });
+
+  const sym = $('detail-symptoms');
+  clearChildren(sym);
+  info.symptoms.forEach(([title, text]) => {
+    sym.appendChild(el('li', { class: 'symptom' }, [el('strong', { text: title }), el('span', { text })]));
+  });
+
+  const hero = $('detail-hero');
+  if (!lastData || !lastDiseases) {
+    hero.className = 'detail-hero is-loading';
+    $('detail-pill').textContent = '…';
+    $('detail-summary').textContent = 'Memuat data cuaca…';
+    clearChildren($('detail-meters'));
+    clearChildren($('detail-forecast'));
+    $('detail-variety').textContent = '';
+    return;
+  }
+
+  const d = diseaseById(id);
+  const lv = LV[d.level];
+  hero.className = `detail-hero hero-${LV_CLASS[lv]}`;
+  const pill = $('detail-pill');
+  pill.className = `pill pill-solid ${LV_CLASS[lv]}`;
+  pill.textContent = LV_TEXT[lv].toUpperCase();
+  $('detail-summary').textContent = optSummary(id);
+
+  const meters = $('detail-meters');
+  clearChildren(meters);
+  const baseLv = LV[d.baseLevel || d.level];
+  optMeters(id).forEach(m => {
+    const pct = Math.max(0, Math.min(1, (+m.value || 0) / m.max));
+    meters.appendChild(el('div', { class: 'meter' }, [
+      el('div', { class: 'meter-head' }, [el('span', { class: 'meter-label', text: m.label }), el('span', { class: 'meter-value', text: fmtNum(m.value) + m.unit })]),
+      el('div', { class: 'meter-track', role: 'img', 'aria-label': `${fmtNum(m.value)}${m.unit}, ambang ${m.thr}${m.unit}` }, [
+        el('div', { class: `meter-fill ${LV_CLASS[baseLv]}`, style: `width:${Math.round(pct * 100)}%` }),
+        el('div', { class: 'meter-tick', style: `left:${Math.round(Math.min(1, m.thr / m.max) * 100)}%` }),
+      ]),
+      el('span', { class: 'meter-note', text: m.note }),
+    ]));
+  });
+
+  const vx = varietyExplanation(d);
+  const vbox = $('detail-variety');
+  clearChildren(vbox);
+  vbox.appendChild(el('span', { text: vx.text + ' ' }));
+  if (vx.pick) vbox.appendChild(el('button', { type: 'button', class: 'link-btn', text: 'Pilih varietas', onclick: openSheet }));
+
+  const fc = $('detail-forecast');
+  clearChildren(fc);
+  (lastData.forecast || []).forEach((day, i) => {
+    const l = forecastLevel(day, id);
+    fc.appendChild(dayCard(day, i, l, LV_TEXT[l]));
+  });
 }
 
-function toggleDiseaseInfo() {
-  const panel = document.getElementById('disease-info-panel');
-  const label = document.getElementById('info-toggle-label');
-  const open  = panel.classList.toggle('hidden');
-  label.textContent = open ? 'Cara hitung' : 'Tutup';
+// ── Routing ──────────────────────────────────────────────────────────────────
+
+function route() {
+  const m = location.hash.match(/^#\/opt\/(blast|hdb|bercak|wereng)$/);
+  const home = $('view-home'), detail = $('view-detail');
+  if (m) {
+    home.hidden = true;
+    detail.hidden = false;
+    renderDetail(m[1]);
+    document.title = `${OPT_INFO[m[1]].name} — PantauPadi`;
+    window.scrollTo(0, 0);
+    $('detail-heading').focus({ preventScroll: true });
+  } else {
+    const wasDetail = !detail.hidden;
+    detail.hidden = true;
+    home.hidden = false;
+    currentDetailId = null;
+    document.title = 'PantauPadi — Prediksi Risiko OPT Padi Berbasis Cuaca Realtime';
+    if (wasDetail) window.scrollTo(0, 0);
+  }
 }
 
-// ── Weather Fetch ─────────────────────────────────────────────────────────────
+// ── Bagikan ──────────────────────────────────────────────────────────────────
 
-function showLoadError() {
-  const section = document.getElementById('loading-section');
-  clearChildren(section);
-  section.classList.remove('pulse');
-  const icon = mk('div', 'text-4xl mb-2', '⚠️');
-  const msg  = mk('div', 'text-red-500 text-sm', 'Gagal memuat data. Coba lagi nanti.');
-  section.appendChild(icon);
-  section.appendChild(msg);
+function shareAlert(optId) {
+  if (!lastDiseases) return;
+  const v = getCurrentVariety();
+  const url = `https://pantau.agroinovasi.my.id/${optId ? '#/opt/' + optId : ''}`;
+  const lines = [`PantauPadi · ${cityLabel()}`];
+  if (v.id !== 'umum') lines.push(`Varietas: ${varietyShortName(v)}`);
+  lines.push('');
+  const ids = optId ? [optId] : OPT_ORDER;
+  ids.forEach(id => lines.push(`${OPT_INFO[id].name}: risiko ${LV_TEXT[LV[diseaseById(id).level]].toUpperCase()}`));
+  if (optId) {
+    lines.push('', 'Yang perlu dilakukan:');
+    OPT_INFO[optId].actions.slice(0, 2).forEach(([, t]) => lines.push('- ' + t));
+  } else {
+    lines.push('', $('hero-todo').textContent);
+  }
+  lines.push('', 'Model indikatif, pastikan dengan pengamatan langsung.', url);
+  const text = lines.join('\n');
+  if (navigator.share) {
+    navigator.share({ title: 'Peringatan PantauPadi', text }).catch(() => {});
+  } else {
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+  }
 }
 
+// ── Sheet lokasi & varietas ──────────────────────────────────────────────────
+
+let pendingProvince = 0, pendingCity = 0, pendingVariety = 'umum';
+
+function fillProvinceSelect() {
+  const sel = $('sheet-province');
+  clearChildren(sel);
+  PROVINCES.forEach((p, i) => sel.appendChild(el('option', { value: String(i), text: p.name, selected: i === pendingProvince })));
+}
+
+function fillCitySelect() {
+  const sel = $('sheet-city');
+  clearChildren(sel);
+  PROVINCES[pendingProvince].cities.forEach((c, i) => sel.appendChild(el('option', { value: String(i), text: c.name, selected: i === pendingCity })));
+}
+
+const VARIETY_GROUP_LABELS = {
+  default:     'Default',
+  rekomendasi: 'Rekomendasi tanam Kalbar',
+  referensi:   'Varietas referensi / kontrol',
+};
+
+function varietyBadges(v) {
+  const parts = [];
+  if (v.blas)   parts.push(`blas ${v.blas}`);
+  if (v.hdb)    parts.push(`HDB ${v.hdb}`);
+  if (v.wereng) parts.push(`WBC ${v.wereng}`);
+  return parts.join(' · ');
+}
+
+function renderVarietyOptions() {
+  const q = $('sheet-variety-search').value.trim().toLowerCase();
+  const list = $('sheet-variety-list');
+  clearChildren(list);
+  const items = RICE_VARIETIES.filter(v => !q || v.name.toLowerCase().includes(q) || v.id.includes(q));
+  if (!items.length) { list.appendChild(el('p', { class: 'muted small', text: 'Varietas tidak ditemukan.' })); return; }
+  let group = null;
+  items.forEach(v => {
+    if (v.group !== group) {
+      group = v.group;
+      list.appendChild(el('p', { class: 'group-label', text: VARIETY_GROUP_LABELS[group] || group }));
+    }
+    const id = 'var-' + v.id;
+    list.appendChild(el('label', { class: 'variety-opt', for: id }, [
+      el('input', { type: 'radio', name: 'variety', id, value: v.id, checked: v.id === pendingVariety, onchange: () => { pendingVariety = v.id; renderVarietyNote(); } }),
+      el('span', { class: 'variety-text' }, [
+        el('span', { class: 'variety-name', text: v.name }),
+        varietyBadges(v) ? el('span', { class: 'variety-badges', text: varietyBadges(v) }) : null,
+      ]),
+    ]));
+  });
+}
+
+function renderVarietyNote() {
+  const v = RICE_VARIETIES.find(x => x.id === pendingVariety) || RICE_VARIETIES[0];
+  const box = $('sheet-variety-note');
+  box.hidden = !v.note;
+  box.textContent = v.note || '';
+}
+
+function openSheet() {
+  pendingProvince = currentProvinceIndex;
+  pendingCity = currentCityIndex;
+  pendingVariety = currentVarietyId;
+  fillProvinceSelect();
+  fillCitySelect();
+  $('sheet-variety-search').value = '';
+  renderVarietyOptions();
+  renderVarietyNote();
+  $('sheet-geo').textContent = '';
+  $('sheet').showModal();
+}
+
+function applySheet() {
+  const locChanged = pendingProvince !== currentProvinceIndex || pendingCity !== currentCityIndex;
+  const varChanged = pendingVariety !== currentVarietyId;
+  currentProvinceIndex = pendingProvince;
+  currentCityIndex = pendingCity;
+  currentVarietyId = pendingVariety;
+  saveLocation();
+  try { localStorage.setItem(VARIETY_STORAGE_KEY, currentVarietyId); } catch (_) {}
+  $('sheet').close();
+  renderHeaderBits();
+  if (locChanged) { lastWeatherUpdate = 0; fetchAndRender(); }
+  else if (varChanged) recomputeAndRender();
+}
+
+function nearestCity(lat, lon) {
+  let best = { d: Infinity, p: 0, c: 0 };
+  PROVINCES.forEach((prov, pi) => prov.cities.forEach((city, ci) => {
+    const d = haversineKm(lat, lon, city.lat, city.lon);
+    if (d < best.d) best = { d, p: pi, c: ci };
+  }));
+  return best;
+}
+
+function sheetUseGps() {
+  const msg = $('sheet-geo');
+  if (!navigator.geolocation) { msg.textContent = 'Perangkat tidak mendukung GPS.'; return; }
+  msg.textContent = 'Mencari lokasi…';
+  navigator.geolocation.getCurrentPosition(({ coords }) => {
+    const b = nearestCity(coords.latitude, coords.longitude);
+    pendingProvince = b.p; pendingCity = b.c;
+    fillProvinceSelect(); fillCitySelect();
+    msg.textContent = `Terdekat: ${PROVINCES[b.p].cities[b.c].name} (±${Math.round(b.d)} km)`;
+  }, () => { msg.textContent = 'Lokasi tidak bisa dibaca. Izinkan akses lokasi atau pilih manual.'; },
+  { timeout: 10000, maximumAge: 300000 });
+}
+
+function initSheet() {
+  $('loc-btn').addEventListener('click', openSheet);
+  $('sheet-province').addEventListener('change', e => { pendingProvince = +e.target.value; pendingCity = 0; fillCitySelect(); });
+  $('sheet-city').addEventListener('change', e => { pendingCity = +e.target.value; });
+  $('sheet-variety-search').addEventListener('input', renderVarietyOptions);
+  $('sheet-gps').addEventListener('click', sheetUseGps);
+  $('sheet-cancel').addEventListener('click', () => $('sheet').close());
+  $('sheet-form').addEventListener('submit', e => { e.preventDefault(); applySheet(); });
+}
+
+// GPS otomatis saat buka: pindah ke kab/kota terdekat bila belum pernah memilih manual
+function detectGeolocation() {
+  let saved = null;
+  try { saved = localStorage.getItem(PROVINCE_STORAGE_KEY); } catch (_) {}
+  if (saved || !navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(({ coords }) => {
+    const b = nearestCity(coords.latitude, coords.longitude);
+    if (b.p === currentProvinceIndex && b.c === currentCityIndex) return;
+    currentProvinceIndex = b.p; currentCityIndex = b.c;
+    saveLocation();
+    renderHeaderBits();
+    lastWeatherUpdate = 0;
+    fetchAndRender();
+  }, null, { timeout: 10000, maximumAge: 300000 });
+}
+
+// ── Fetch & render ───────────────────────────────────────────────────────────
+
+function recomputeAndRender() {
+  if (!lastData) return;
+  const c = lastData.current;
+  lastDiseases = calculateDiseaseRisks(c.suhu, c.rh, c.hujan_7hari, lastData.cumulative);
+  renderHeaderBits();
+  renderHome();
+  if (currentDetailId) renderDetail(currentDetailId);
+}
+
+let fetchSeq = 0;
 async function fetchAndRender() {
+  const seq = ++fetchSeq;
+  const city = getCurrentCity();
+  if (!lastData) setStatus('loading', 'Memuat data cuaca…');
+  else setStatus('loading', `Memuat data ${city.name}…`);
   try {
-    const city = getCurrentCity();
-    const url  = `${API_BASE_URL}/api/weather?lat=${city.lat}&lon=${city.lon}`;
-    const res  = await fetch(url);
+    const res  = await fetch(`${API_BASE_URL}/api/weather?lat=${city.lat}&lon=${city.lon}`);
     const data = await res.json();
     if (!data.success) throw new Error(data.error);
-
-    document.getElementById('loading-section').classList.add('hidden');
-    updateWeatherCards(data.current);
-    updateWeatherChart(data.history);
-    lastWeatherSnapshot = { current: data.current, cumulative: data.cumulative };
-    const diseases = calculateDiseaseRisks(data.current.suhu, data.current.rh, data.current.hujan_7hari, data.cumulative);
-    updateRiskSection(diseases);
-    if (data.forecast) updateForecastSection(data.forecast);
-    document.getElementById('weather-dummy-warning').classList.toggle('hidden', !data.isDummy);
-    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('id-ID');
+    if (seq !== fetchSeq) return;
+    lastData = data;
     lastWeatherUpdate = Date.now();
+    $('app').classList.remove('is-empty');
+    setStatus(data.isDummy ? 'warn' : null, 'Open-Meteo sedang tidak tersedia. Angka di bawah adalah data estimasi, bukan pengukuran.');
+    $('last-updated').textContent = 'Diperbarui ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    recomputeAndRender();
   } catch (err) {
     console.error('fetchAndRender error:', err);
-    showLoadError();
+    if (seq !== fetchSeq) return;
+    setStatus('error', lastData ? 'Gagal memperbarui data. Yang tampil adalah data terakhir.' : 'Gagal memuat data cuaca. Periksa koneksi internet.');
   }
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────────────────────────
 
 function init() {
   restoreLocation();
-  initProvinceSelector();
-  populateCitySelector();
-  initVarietySelector();
+  try {
+    const stored = localStorage.getItem(VARIETY_STORAGE_KEY);
+    if (stored && RICE_VARIETIES.some(v => v.id === stored)) currentVarietyId = stored;
+  } catch (_) {}
+
+  renderHeaderBits();
+  initSheet();
+
+  ['all', 'blast', 'hdb', 'bercak', 'wereng'].forEach(id => {
+    $('ftab-' + id).addEventListener('click', () => { currentForecastDisease = id; if (lastData) renderForecast(); });
+  });
+  ['rh', 'suhu', 'hujan'].forEach(t => {
+    $('wtab-' + t).addEventListener('click', () => { currentWeatherTab = t; renderWeatherChart(); });
+  });
+  $('share-home').addEventListener('click', () => shareAlert(null));
+  $('share-detail').addEventListener('click', () => shareAlert(currentDetailId));
+  $('share-detail-top').addEventListener('click', () => shareAlert(currentDetailId));
+
+  window.addEventListener('hashchange', route);
+  route();
   fetchAndRender();
   detectGeolocation();
   weatherTimer = setInterval(() => {

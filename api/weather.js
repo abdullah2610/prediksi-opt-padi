@@ -85,8 +85,10 @@ function parseOpenMeteo(apiData) {
   const cumulative = computeCumulativeMetrics(time, temperature_2m, relative_humidity_2m, precipitation, rainStart, currentIdx);
 
   const d = apiData.daily;
-  const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
-  const todayUnix = Math.floor(todayMidnight.getTime() / 1000);
+  // Tanggal harian Open-Meteo = tengah malam waktu lokal (Asia/Jakarta); server Vercel berjalan di UTC.
+  const tzOffset  = apiData.utc_offset_seconds || 0;
+  const localDate = unix => new Date((unix + tzOffset) * 1000).toISOString().slice(0, 10);
+  const todayStr  = localDate(nowUnix);
   const allDaily = d.time.map((t, i) => ({
     unix: t, hujan: d.precipitation_sum[i] || 0,
     rh_max: d.relative_humidity_2m_max[i],
@@ -95,11 +97,11 @@ function parseOpenMeteo(apiData) {
 
   const forecast = [];
   for (let i = 0; i < allDaily.length && forecast.length < 14; i++) {
-    if (allDaily[i].unix < todayUnix) continue;
+    if (localDate(allDaily[i].unix) < todayStr) continue;
     let rain7d = 0;
     for (let j = Math.max(0, i - 6); j <= i; j++) rain7d += allDaily[j].hujan;
     forecast.push({
-      date: new Date(allDaily[i].unix * 1000).toISOString().slice(0, 10),
+      date: localDate(allDaily[i].unix),
       suhu_max: allDaily[i].suhu_max, suhu_min: allDaily[i].suhu_min,
       rh_max: allDaily[i].rh_max, hujan: +allDaily[i].hujan.toFixed(1),
       hujan_7hari: +rain7d.toFixed(1),

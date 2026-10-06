@@ -10,7 +10,7 @@
   <meta name="keywords" content="PantauPadi, OPT padi, prediksi penyakit padi, blast padi, hawar daun bakteri HDB, wereng coklat, bercak coklat, prakiraan cuaca pertanian, BRMP Kalimantan Barat, SiPOPT padi, risiko padi">
   <meta name="robots" content="index, follow">
   <meta name="author" content="BRMP Kalimantan Barat">
-  <meta name="theme-color" content="#15803d">
+  <meta name="theme-color" content="#14532D">
   <link rel="canonical" href="https://pantau.agroinovasi.my.id/">
 
   <!-- Open Graph -->
@@ -30,29 +30,13 @@
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
-  <!-- Performance: preconnect CDN -->
-  <link rel="preconnect" href="https://cdn.tailwindcss.com">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="dns-prefetch" href="https://api.open-meteo.com">
 
-  <!-- Styles -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
-          integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g"
-          crossorigin="anonymous"></script>
-  <style>
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-    .pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite }
-    .ftab { background:#f3f4f6; color:#374151; border-color:#d1d5db; cursor:pointer }
-    .ftab:hover { background:#e5e7eb }
-    .ftab.active { background:#16a34a; color:#fff; border-color:#16a34a }
-    #forecast-scroll { scrollbar-width:thin; scrollbar-color:#d1d5db transparent }
-    #forecast-scroll::-webkit-scrollbar { height:4px }
-    #forecast-scroll::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:2px }
-    .variety-option-highlight { background:#dcfce7; }
-    #variety-list { scrollbar-width:thin; scrollbar-color:#d1d5db transparent }
-    #variety-trigger[aria-expanded="true"] .variety-chevron { transform:rotate(180deg); }
-  </style>
+  <!-- Fonts & styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="dns-prefetch" href="https://api.open-meteo.com">
+  <link rel="stylesheet" href="/styles.css">
 
   <!-- Schema.org WebApplication -->
   <script type="application/ld+json">
@@ -90,252 +74,262 @@
   }
   </script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body>
+<div id="app" class="app is-empty">
 
-  <!-- Header / Site Identity -->
-  <header class="bg-green-700 text-white shadow-lg sticky top-0 z-20" role="banner">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-bold leading-tight flex items-center gap-2">
-          🌾 PantauPadi
-        </h1>
-        <p class="text-green-200 text-xs">Prediksi OPT Padi · BRMP Kalimantan Barat</p>
+  <!-- ═══════════════ BERANDA ═══════════════ -->
+  <div id="view-home">
+    <header class="topbar" role="banner">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 13c-3 0-5-2-5-5 3 0 5 2 5 5z"/><path d="M12 10c0-3 2-5 5-5 0 3-2 5-5 5z"/><path d="M12 17c-2.5 0-4-1.5-4-4 2.5 0 4 1.5 4 4z"/></svg>
+        </span>
+        <span class="brand-text">
+          <span class="brand-name">PantauPadi</span>
+          <span class="brand-sub">BRMP Kalimantan Barat</span>
+        </span>
       </div>
-      <div class="text-right">
-        <p class="text-green-200 text-xs">Terakhir diperbarui</p>
-        <p id="last-updated" class="text-white text-xs font-medium">--</p>
-      </div>
-    </div>
-  </header>
+      <span id="last-updated" class="chip-time" aria-live="polite">Memuat…</span>
+    </header>
 
-  <main class="max-w-2xl mx-auto px-4 py-5 space-y-4" id="main-content">
+    <main id="main-content">
+      <p class="sr-only">
+        PantauPadi membantu petani dan penyuluh pertanian memantau risiko serangan OPT padi
+        seperti blast, hawar daun bakteri (HDB), wereng coklat, dan bercak coklat
+        berdasarkan data cuaca realtime di seluruh Jawa dan Kalimantan.
+      </p>
 
-    <!-- Intro untuk SEO — visually minimal, semantically helpful -->
-    <p class="sr-only">
-      PantauPadi membantu petani dan penyuluh pertanian memantau risiko serangan OPT padi
-      seperti blast, hawar daun bakteri (HDB), wereng coklat, dan bercak coklat
-      berdasarkan data cuaca realtime di seluruh Jawa dan Kalimantan.
-    </p>
-
-    <!-- Location Selector -->
-    <section aria-label="Pilih lokasi pantauan">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-start gap-3">
-        <span class="text-lg mt-1" aria-hidden="true">📍</span>
-        <div class="flex-1 space-y-2">
-          <div>
-            <label for="province-selector" class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Provinsi</label>
-            <select id="province-selector" onchange="onProvinceChange()"
-                    class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
-            </select>
-          </div>
-          <div>
-            <label for="city-selector" class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Kab / Kota</label>
-            <select id="city-selector" onchange="onCityChange()"
-                    class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500">
-            </select>
-          </div>
-          <div id="geo-status" class="hidden text-xs text-green-600 font-medium" role="status" aria-live="polite"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Variety Selector -->
-    <section aria-label="Pilih varietas padi">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 flex items-center gap-3">
-        <span class="text-lg" aria-hidden="true">🌾</span>
-        <div class="flex-1">
-          <label for="variety-trigger" class="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Varietas Padi</label>
-          <div id="variety-selector-wrap" class="relative">
-            <button type="button" id="variety-trigger" aria-haspopup="listbox" aria-expanded="false"
-                    class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500 flex items-center gap-2 text-left">
-              <span id="variety-label" class="flex-1 truncate text-gray-800"></span>
-              <svg class="variety-chevron w-4 h-4 shrink-0 text-gray-500 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/>
-              </svg>
-            </button>
-            <div id="variety-panel"
-                 class="hidden absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-              <div class="p-2 border-b border-gray-100 bg-white">
-                <input type="text" id="variety-search" autocomplete="off"
-                       placeholder="Cari varietas…"
-                       aria-label="Cari varietas padi"
-                       class="w-full text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:border-green-500" />
-              </div>
-              <div id="variety-list" class="max-h-48 overflow-y-auto" role="listbox" aria-label="Daftar varietas padi"></div>
-            </div>
-          </div>
-          <p id="variety-note" class="hidden text-xs mt-1.5 text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1" role="note"></p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Weather Cards -->
-    <section id="weather-section" class="hidden" aria-label="Data cuaca realtime">
-      <h2 class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2 px-1">🌤️ Cuaca Realtime</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1" aria-hidden="true">🌡️</div>
-          <div class="text-xs text-gray-500 mb-1">Suhu Udara</div>
-          <div id="weather-suhu" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
-          <div class="text-xs text-gray-400">°C</div>
-          <div id="weather-suhu-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1" aria-hidden="true">💧</div>
-          <div class="text-xs text-gray-500 mb-1">Kelembaban</div>
-          <div id="weather-rh" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
-          <div class="text-xs text-gray-400">%</div>
-          <div id="weather-rh-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1" aria-hidden="true">🔽</div>
-          <div class="text-xs text-gray-500 mb-1">Tekanan</div>
-          <div id="weather-tekanan" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
-          <div class="text-xs text-gray-400">hPa</div>
-          <div id="weather-tekanan-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
-        </div>
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
-          <div class="text-2xl mb-1" aria-hidden="true">🌧️</div>
-          <div class="text-xs text-gray-500 mb-1">Hujan 7 Hari</div>
-          <div id="weather-hujan" class="text-3xl font-bold text-gray-800" aria-live="polite">--</div>
-          <div class="text-xs text-gray-400">mm</div>
-          <div id="weather-hujan-label" class="text-xs mt-1 font-medium text-gray-400">--</div>
-        </div>
-      </div>
-      <div id="weather-dummy-warning" class="hidden text-xs text-center text-amber-600 mt-2" role="alert">
-        ⚠️ Menggunakan data estimasi (Open-Meteo tidak tersedia)
-      </div>
-      <p class="text-xs text-center text-gray-400 mt-1">Sumber: <a href="https://open-meteo.com" rel="noopener noreferrer" class="underline hover:text-gray-600">Open-Meteo.com</a> (realtime)</p>
-    </section>
-
-    <!-- Loading -->
-    <div id="loading-section" class="pulse text-center py-12" role="status" aria-label="Memuat data cuaca">
-      <div class="text-4xl mb-2" aria-hidden="true">⏳</div>
-      <div class="text-gray-500 text-sm">Memuat data cuaca...</div>
-    </div>
-
-    <!-- Risk Section -->
-    <section id="risk-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4" aria-label="Risiko penyakit tanaman padi">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide">⚕️ Risiko Penyakit Tanaman</h2>
-        <button onclick="toggleDiseaseInfo()" aria-expanded="false" aria-controls="disease-info-panel"
-                class="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1">
-          <span aria-hidden="true">ℹ️</span><span id="info-toggle-label">Cara hitung</span>
+      <div class="pad">
+        <button type="button" id="loc-btn" class="loc-btn" aria-haspopup="dialog">
+          <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+          <span class="loc-text">
+            <span id="loc-city" class="loc-city">--</span>
+            <span id="loc-variety" class="loc-variety">--</span>
+          </span>
+          <span class="loc-action">Ubah</span>
         </button>
       </div>
-      <div id="risk-cards" class="space-y-2" aria-live="polite" aria-label="Tingkat risiko OPT padi"></div>
 
-      <!-- Disease Info Panel -->
-      <div id="disease-info-panel" class="hidden mt-3 pt-3 border-t border-gray-100 space-y-2 text-xs text-gray-600">
-        <h3 class="font-semibold text-gray-700">Penyesuaian Varietas (adaptive):</h3>
-        <div class="bg-amber-50 rounded p-2 border border-amber-200">
-          Risiko cuaca digeser berdasarkan ketahanan genetik label SK pelepasan:
-          <strong>Tahan (R)</strong> −2 level (−1 jika tekanan cuaca ekstrem);
-          <strong>Agak Tahan (AT)</strong> −1 (0 jika ekstrem);
-          <strong>Agak Rentan (AR)</strong> +1 (+2 ekstrem);
-          <strong>Rentan (RN)</strong> +2;
-          <strong>Sangat Rentan (SR)</strong> +2;
-          <em>tidak diuji (?)</em> tidak ada penyesuaian.
-          Skala SES IRRI dari <em>Deskripsi VUB Padi</em> BB Padi/Balitbangtan 2015.
+      <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+
+      <section id="hero" class="hero is-loading" aria-labelledby="hero-title">
+        <span class="eyebrow">Status minggu ini</span>
+        <h1 id="hero-title">Memuat status…</h1>
+        <p id="hero-text">Mengambil data cuaca dan menghitung risiko OPT untuk lokasi Anda.</p>
+        <div class="hero-todo">
+          <span class="hero-todo-label">Yang perlu dilakukan</span>
+          <span id="hero-todo">--</span>
         </div>
-        <div class="bg-red-50 rounded p-2 border border-red-200" role="note">
-          ⚠️ <strong>Catatan penting:</strong> Label SK pelepasan diuji rumah kaca BB Padi Sukamandi terhadap patotipe/ras spesifik.
-          Patotipe Xoo &amp; ras <em>P. oryzae</em> lokal Kalbar dapat berbeda dan ketahanan bisa <em>patah</em>
-          (kasus Situ Bagendit "agak tahan" → KP 40,25% di Jember bila pupuk N berlebih).
-          Pertahankan pupuk N ≤ 200 kg Urea/ha + pengairan berselang + jajar legowo.
+        <button type="button" id="share-home" class="hero-share">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+          Bagikan ke grup tani
+        </button>
+      </section>
+
+      <section class="section" aria-labelledby="risk-title">
+        <div class="section-head">
+          <h2 id="risk-title">Risiko OPT</h2>
+          <span class="muted small">model kumulatif 7 hari</span>
         </div>
-        <h3 class="font-semibold text-gray-700 pt-2">Model kumulatif 7 hari (bukan snapshot):</h3>
-        <div class="bg-gray-50 rounded p-2">
-          <strong>🔴 Blast Padi</strong> — Akumulasi jam RH≥85% &amp; suhu 24–28°C/7hr.
-          <strong>Tinggi</strong> jika ≥3 hari favorable + hujan ≥20mm/7hr.
-          <em class="text-gray-400">(Pyricularia oryzae; IRRI, BB Padi)</em>
+        <div id="risk-grid" class="risk-grid">
+          <div class="risk-card skeleton"></div><div class="risk-card skeleton"></div>
+          <div class="risk-card skeleton"></div><div class="risk-card skeleton"></div>
         </div>
-        <div class="bg-gray-50 rounded p-2">
-          <strong>🟡 Bercak Coklat</strong> — Hari RH≥80% ≥10 jam/7hr.
-          <strong>Sedang</strong> jika ≥3 hari + hujan ≥15mm/7hr.
-          <em class="text-gray-400">(Helminthosporium oryzae)</em>
+        <p class="muted small">Batang kecil = prakiraan 7 hari ke depan. Ketuk kartu untuk penyebab, ambang, dan saran pengendalian.</p>
+      </section>
+
+      <section class="section" aria-labelledby="weather-title">
+        <div class="section-head">
+          <h2 id="weather-title">Cuaca sekarang</h2>
+          <a class="small" href="https://open-meteo.com" rel="noopener noreferrer">Open-Meteo</a>
         </div>
-        <div class="bg-gray-50 rounded p-2">
-          <strong>🔴 Hawar Daun Bakteri (HDB)</strong> — Jam hujan (&gt;1mm) + jam RH≥85%/72hr.
-          <strong>Tinggi</strong> jika ≥15 jam hujan &amp; ≥20 jam RH tinggi/72hr.
-          <em class="text-gray-400">(Xanthomonas oryzae pv. oryzae)</em>
+        <div class="card">
+          <div id="weather-metrics" class="metrics">
+            <div class="metric skeleton-line"></div><div class="metric skeleton-line"></div>
+            <div class="metric skeleton-line"></div><div class="metric skeleton-line"></div>
+          </div>
+          <div class="chart">
+            <div class="chart-head">
+              <span id="weather-chart-title" class="chart-title">Kelembaban 24 jam</span>
+              <span id="weather-caption" class="muted small"></span>
+            </div>
+            <div class="seg" role="group" aria-label="Pilih grafik">
+              <button type="button" id="wtab-rh" class="seg-btn active">Kelembaban</button>
+              <button type="button" id="wtab-suhu" class="seg-btn">Suhu</button>
+              <button type="button" id="wtab-hujan" class="seg-btn">Hujan</button>
+            </div>
+            <svg id="weather-svg" class="chart-svg" viewBox="0 0 320 72" preserveAspectRatio="none" role="img" aria-label="Kelembaban 24 jam"></svg>
+            <div id="weather-axis" class="chart-axis"></div>
+          </div>
         </div>
-        <div class="bg-gray-50 rounded p-2">
-          <strong>🔴 Wereng Coklat</strong> — Jam optimal (RH≥78%, 22–32°C)/7hr.
-          Hujan &gt;80mm/7hr menekan. <strong>Tinggi</strong> jika ≥80 jam optimal.
-          <em class="text-gray-400">(Nilaparvata lugens)</em>
+      </section>
+
+      <section class="section section-bleed" aria-labelledby="forecast-title">
+        <h2 id="forecast-title" class="pad-x">Prakiraan 14 hari</h2>
+        <div class="chips" role="group" aria-label="Filter OPT">
+          <button type="button" id="ftab-all" class="chip active" aria-pressed="true">Semua</button>
+          <button type="button" id="ftab-blast" class="chip" aria-pressed="false">Blast</button>
+          <button type="button" id="ftab-hdb" class="chip" aria-pressed="false">HDB</button>
+          <button type="button" id="ftab-bercak" class="chip" aria-pressed="false">Bercak</button>
+          <button type="button" id="ftab-wereng" class="chip" aria-pressed="false">Wereng</button>
         </div>
-        <p class="text-gray-400 text-xs">Model indikatif — bukan diagnosis definitif.</p>
+        <div id="forecast-row" class="day-row" tabindex="0" role="region" aria-label="Prakiraan risiko per hari"></div>
+        <div class="legend pad-x" aria-label="Keterangan tingkat risiko">
+          <span><span class="dot lv-high" aria-hidden="true"></span>Tinggi</span>
+          <span><span class="dot lv-med" aria-hidden="true"></span>Sedang</span>
+          <span><span class="dot lv-low" aria-hidden="true"></span>Rendah</span>
+        </div>
+      </section>
+
+      <section class="section" aria-label="Cara kerja model">
+        <details class="acc">
+          <summary>Cara model menghitung risiko<span class="acc-ico" aria-hidden="true">+</span></summary>
+          <div class="acc-body">
+            <p>Risiko dihitung dari akumulasi jam lembab, suhu, dan hujan 7 hari terakhir (data jam-per-jam Open-Meteo), lalu digeser sesuai ketahanan varietas pada SK pelepasan (skala SES IRRI, <em>Deskripsi VUB Padi</em> BB Padi 2015).</p>
+            <p>Pergeseran varietas: Tahan −2 level (−1 bila tekanan cuaca ekstrem), Agak Tahan −1 (0 bila ekstrem), Agak Rentan +1 (+2 bila ekstrem), Rentan dan Sangat Rentan +2. Tidak diuji: tanpa penyesuaian.</p>
+            <p>Ketahanan diuji di rumah kaca terhadap patotipe atau ras tertentu dan bisa patah pada patotipe lokal, terutama bila pupuk N berlebih. Pertahankan urea ≤200 kg/ha, pengairan berselang, dan jajar legowo.</p>
+            <p class="muted">Model indikatif, bukan diagnosis definitif.</p>
+          </div>
+        </details>
+        <details class="acc">
+          <summary>Ambang tiap OPT<span class="acc-ico" aria-hidden="true">+</span></summary>
+          <div class="acc-body">
+            <p><strong>Blast</strong>: tinggi jika ≥3 hari mendukung (RH ≥85% pada 24–28°C, minimal 8 jam/hari) dan hujan ≥20 mm/7 hari.</p>
+            <p><strong>HDB</strong>: tinggi jika ≥15 jam hujan dalam 7 hari dan ≥20 jam RH ≥85% dalam 72 jam.</p>
+            <p><strong>Bercak coklat</strong>: sedang jika ≥3 hari RH ≥80% lebih dari 10 jam dan hujan ≥15 mm/7 hari.</p>
+            <p><strong>Wereng coklat</strong>: tinggi jika ≥80 jam optimal (RH ≥78%, 22–32°C) dan hujan &lt;60 mm/7 hari.</p>
+            <p class="muted">Prakiraan 14 hari memakai versi harian (RH maks, suhu rata-rata, hujan 7 hari bergulir). Rincian ada di halaman detail tiap OPT.</p>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer class="footer" role="contentinfo">
+      <a class="btn-outline" href="/masukan.html">Beri masukan</a>
+      <address>
+        <strong>PantauPadi</strong> · Sistem Informasi Prediksi OPT Padi · BRMP Kalimantan Barat.
+        Data cuaca <a href="https://open-meteo.com" rel="noopener noreferrer">Open-Meteo.com</a>.
+      </address>
+    </footer>
+  </div>
+
+  <!-- ═══════════════ DETAIL OPT ═══════════════ -->
+  <div id="view-detail" hidden>
+    <header class="topbar topbar-detail">
+      <a href="#/" class="icon-btn" aria-label="Kembali ke beranda">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <div class="detail-title">
+        <span id="detail-heading" class="detail-heading" tabindex="-1">Detail risiko OPT</span>
+        <span id="detail-sub" class="brand-sub">--</span>
       </div>
-    </section>
+      <button type="button" id="share-detail-top" class="icon-btn" aria-label="Bagikan">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+      </button>
+    </header>
 
-    <!-- Weather Chart -->
-    <section id="weather-chart-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4" aria-label="Grafik cuaca 24 jam">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-gray-700">Cuaca 24 Jam</h2>
-        <div class="flex gap-1" role="tablist" aria-label="Pilih grafik">
-          <button onclick="showWeatherTab('suhu-rh')" id="wtab-suhu-rh" role="tab" aria-selected="true"
-                  class="ftab active px-2 py-1 text-xs rounded border">🌡️ Suhu &amp; RH</button>
-          <button onclick="showWeatherTab('hujan')" id="wtab-hujan" role="tab" aria-selected="false"
-                  class="ftab px-2 py-1 text-xs rounded border">🌧️ Hujan</button>
+    <main id="detail-main">
+      <nav id="detail-tabs" class="tabs" aria-label="Pilih OPT"></nav>
+
+      <section id="detail-hero" class="detail-hero is-loading" aria-labelledby="detail-name">
+        <div class="detail-hero-top">
+          <span id="detail-pill" class="pill pill-solid">…</span>
+          <span class="small ink2">7 hari terakhir</span>
         </div>
-      </div>
-      <div class="relative" style="height:220px">
-        <div id="weather-chart-suhu-rh" class="absolute inset-0" role="tabpanel">
-          <canvas id="weatherChart" aria-label="Grafik suhu dan kelembaban udara 24 jam terakhir"></canvas>
+        <div>
+          <h1 id="detail-name">--</h1>
+          <span id="detail-latin" class="latin">--</span>
         </div>
-        <div id="weather-chart-hujan" class="hidden absolute inset-0" role="tabpanel">
-          <canvas id="rainChart" aria-label="Grafik curah hujan 24 jam terakhir"></canvas>
+        <p id="detail-summary">--</p>
+      </section>
+
+      <section class="section" aria-labelledby="why-title">
+        <h2 id="why-title">Kenapa levelnya begini</h2>
+        <div class="card">
+          <div id="detail-meters" class="meters"></div>
+          <div class="variety-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21V9"/><path d="M12 13c-3 0-5-2-5-5 3 0 5 2 5 5z"/><path d="M12 10c0-3 2-5 5-5 0 3-2 5-5 5z"/></svg>
+            <span id="detail-variety"></span>
+          </div>
         </div>
+      </section>
+
+      <section class="section" aria-labelledby="todo-title">
+        <h2 id="todo-title">Yang perlu dilakukan</h2>
+        <ol id="detail-actions" class="actions"></ol>
+      </section>
+
+      <section class="section" aria-labelledby="sym-title">
+        <h2 id="sym-title">Kenali gejalanya</h2>
+        <ul id="detail-symptoms" class="symptoms"></ul>
+      </section>
+
+      <section class="section section-bleed" aria-labelledby="detail-forecast-title">
+        <h2 id="detail-forecast-title" class="pad-x">Prakiraan 14 hari</h2>
+        <div id="detail-forecast" class="day-row" tabindex="0" role="region" aria-label="Prakiraan risiko per hari"></div>
+      </section>
+
+      <section class="section">
+        <details class="acc">
+          <summary><span id="detail-model-title">Ambang model</span><span class="acc-ico" aria-hidden="true">+</span></summary>
+          <div class="acc-body"><p id="detail-model"></p></div>
+        </details>
+      </section>
+
+      <section class="section section-last">
+        <button type="button" id="share-detail" class="btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-5.2A8.5 8.5 0 1 1 21 11.5z"/></svg>
+          Bagikan peringatan ke grup tani
+        </button>
+        <p class="muted small">Model indikatif, bukan diagnosis. Pastikan dengan pengamatan langsung atau hubungi POPT setempat.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══════════════ SHEET LOKASI & VARIETAS ═══════════════ -->
+  <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+    <form id="sheet-form" method="dialog">
+      <div class="sheet-head">
+        <h2 id="sheet-title">Lokasi &amp; varietas</h2>
+        <button type="button" id="sheet-cancel" class="icon-btn" aria-label="Tutup">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
-    </section>
+      <div class="sheet-body">
+        <div class="field">
+          <label for="sheet-province">Provinsi</label>
+          <select id="sheet-province"></select>
+        </div>
+        <div class="field">
+          <label for="sheet-city">Kab / Kota</label>
+          <select id="sheet-city"></select>
+        </div>
+        <button type="button" id="sheet-gps" class="btn-outline btn-sm">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          Gunakan lokasi saya
+        </button>
+        <p id="sheet-geo" class="muted small" role="status" aria-live="polite"></p>
 
-    <!-- Forecast Section -->
-    <section id="forecast-section" class="hidden bg-white rounded-xl shadow-sm border border-gray-200 p-4" aria-label="Prakiraan 14 hari dan potensi OPT padi">
-      <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">📅 Prakiraan 14 Hari &amp; Potensi Penyakit</h2>
-      <div class="flex gap-1 flex-wrap mb-3" role="tablist" aria-label="Filter penyakit">
-        <button onclick="changeForecastTab('all')"    id="ftab-all"    role="tab" aria-selected="true"  class="ftab active px-2 py-1 text-xs rounded border">Semua</button>
-        <button onclick="changeForecastTab('blast')"  id="ftab-blast"  role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">Blast</button>
-        <button onclick="changeForecastTab('bercak')" id="ftab-bercak" role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">Bercak</button>
-        <button onclick="changeForecastTab('hdb')"    id="ftab-hdb"    role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">HDB</button>
-        <button onclick="changeForecastTab('wereng')" id="ftab-wereng" role="tab" aria-selected="false" class="ftab px-2 py-1 text-xs rounded border">Wereng</button>
+        <div class="field">
+          <label for="sheet-variety-search">Varietas padi</label>
+          <input type="search" id="sheet-variety-search" placeholder="Cari varietas…" autocomplete="off">
+        </div>
+        <fieldset class="variety-list">
+          <legend class="sr-only">Daftar varietas</legend>
+          <div id="sheet-variety-list"></div>
+        </fieldset>
+        <p id="sheet-variety-note" class="note" role="note" hidden></p>
       </div>
-      <div id="forecast-scroll" class="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" aria-live="polite"></div>
-      <div class="mt-3 flex flex-wrap gap-3 text-xs text-gray-500" aria-label="Keterangan tingkat risiko">
-        <span>🚨 Tinggi</span><span>⚠️ Sedang</span><span>🌿 Rendah</span>
-        <span class="ml-auto text-gray-400">Open-Meteo.com</span>
+      <div class="sheet-foot">
+        <button type="submit" class="btn-primary">Terapkan</button>
       </div>
-    </section>
+    </form>
+  </dialog>
+</div>
 
-    <!-- Internal link + CTA -->
-    <p class="text-center text-gray-400 text-xs py-1">
-      Punya masukan atau pertanyaan?
-      <a href="/masukan.html" class="text-green-600 font-medium underline underline-offset-2">Beri tahu kami</a>
-    </p>
-
-  </main>
-
-  <footer class="max-w-2xl mx-auto px-4 pb-6 pt-2 text-center text-gray-400 text-xs" role="contentinfo">
-    <address class="not-italic">
-      <strong class="text-gray-500">PantauPadi</strong> —
-      Sistem Informasi Prediksi OPT Padi
-    </address>
-    <p class="mt-0.5">
-      Dikembangkan oleh BRMP Kalimantan Barat ·
-      Data cuaca: <a href="https://open-meteo.com" rel="noopener noreferrer" class="hover:text-green-600 underline">Open-Meteo.com</a>
-    </p>
-    <p class="mt-0.5">
-      <a href="/" class="hover:text-green-600">Beranda</a> ·
-      <a href="/masukan.html" class="hover:text-green-600">Beri Masukan</a>
-    </p>
-  </footer>
-
-  <script src="app.js" defer></script>
-
-  <noscript>
-    <p style="text-align:center;padding:2rem;color:#6b7280">
-      PantauPadi memerlukan JavaScript. Aktifkan JavaScript di browser Anda untuk menggunakan aplikasi ini.
-    </p>
-  </noscript>
+<script src="/app.js" defer></script>
+<noscript>
+  <p style="text-align:center;padding:2rem">PantauPadi memerlukan JavaScript. Aktifkan JavaScript di browser Anda untuk menggunakan aplikasi ini.</p>
+</noscript>
 </body>
 </html>
