@@ -194,6 +194,12 @@
         </div>
       </section>
 
+      <section class="section section-tight" aria-label="Umur padi saya">
+        <a id="crop-card" href="#/umur" class="crop-card">
+          <span class="crop-head"><span class="crop-eyebrow">Umur padi saya</span></span>
+        </a>
+      </section>
+
       <section class="section" aria-labelledby="risk-title">
         <div class="section-head">
           <h2 id="risk-title">Risiko OPT</h2>
@@ -255,6 +261,7 @@
           <div class="acc-body">
             <p>Risiko dihitung dari akumulasi jam lembab, suhu, dan hujan 7 hari terakhir (data jam-per-jam Open-Meteo), lalu digeser sesuai ketahanan varietas pada SK pelepasan (skala SES IRRI, <em>Deskripsi VUB Padi</em> BB Padi 2015).</p>
             <p>Pergeseran varietas: Tahan −2 level (−1 bila tekanan cuaca ekstrem), Agak Tahan −1 (0 bila ekstrem), Agak Rentan +1 (+2 bila ekstrem), Rentan dan Sangat Rentan +2. Tidak diuji: tanpa penyesuaian.</p>
+            <p>Bila tanggal tanam diisi, level juga digeser sesuai fase tanaman: fase paling rawan menaikkan satu level bila cuaca sudah mendukung (≥ sedang), fase kurang rawan menurunkan satu level. Contoh: blast leher saat bunting–berbunga, kresek HDB pada tanaman muda, wereng setelah fase anakan.</p>
             <p>Ketahanan diuji di rumah kaca terhadap patotipe atau ras tertentu dan bisa patah pada patotipe lokal, terutama bila pupuk N berlebih. Pertahankan urea ≤200 kg/ha, pengairan berselang, dan jajar legowo.</p>
             <p class="muted">Model indikatif, bukan diagnosis definitif.</p>
           </div>
@@ -361,6 +368,56 @@
           Bagikan peringatan ke grup tani
         </button>
         <p class="muted small">Model indikatif, bukan diagnosis. Pastikan dengan pengamatan langsung atau hubungi POPT setempat.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══════════════ UMUR PADI ═══════════════ -->
+  <div id="view-umur" hidden>
+    <header class="topbar topbar-detail">
+      <a href="#/" class="icon-btn" aria-label="Kembali ke beranda">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      <div class="detail-title">
+        <span id="umur-heading" class="detail-heading" tabindex="-1">Umur padi saya</span>
+        <span id="umur-sub" class="brand-sub">--</span>
+      </div>
+    </header>
+
+    <main id="umur-main">
+      <section class="pad-x">
+        <div class="card umur-input">
+          <div class="field">
+            <label for="plant-date">Tanggal tanam (pindah tanam)</label>
+            <input type="date" id="plant-date">
+          </div>
+          <p id="umur-variety-note" class="muted small"></p>
+          <button type="button" id="plant-clear" class="link-btn small" hidden>Hapus tanggal tanam</button>
+        </div>
+      </section>
+
+      <section id="umur-status" class="umur-status" aria-label="Umur padi hari ini" hidden></section>
+
+      <section id="umur-watch-sec" class="section" aria-labelledby="watch-title" hidden>
+        <h2 id="watch-title">Rawan di fase ini</h2>
+        <div id="umur-watch" class="watch-list"></div>
+      </section>
+
+      <section class="section" aria-labelledby="matrix-title">
+        <h2 id="matrix-title">Kerentanan sepanjang musim</h2>
+        <div class="card vmatrix-card">
+          <div id="umur-matrix" class="vmatrix"></div>
+          <p class="muted small">Kolom bergaris = fase sekarang. Kerentanan umum per fase; risiko harian tetap ditentukan cuaca.</p>
+        </div>
+      </section>
+
+      <section id="umur-agenda-sec" class="section" aria-labelledby="agenda-title" hidden>
+        <h2 id="agenda-title">Agenda musim ini</h2>
+        <ol id="umur-agenda" class="agenda"></ol>
+      </section>
+
+      <section class="section section-last">
+        <a href="#/" class="btn-primary">Simpan &amp; kembali ke beranda</a>
       </section>
     </main>
   </div>

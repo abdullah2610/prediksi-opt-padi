@@ -3,6 +3,8 @@ const WEATHER_REFRESH_MS = 300000;
 const VARIETY_STORAGE_KEY  = 'pantaupadi:varietyId';
 const PROVINCE_STORAGE_KEY = 'pantaupadi:provinceId';
 const CITY_STORAGE_KEY     = 'pantaupadi:cityName';
+const PLANT_DATE_STORAGE_KEY = 'pantaupadi:plantDate';
+const DEFAULT_PANEN_HST = 100; // varietas umur sedang ±120 HSS, pindah tanam umur ±21 hari
 
 // ── Location Data ─────────────────────────────────────────────────────────────
 const PROVINCES = [
@@ -263,8 +265,8 @@ const RICE_VARIETIES = [
   { id: 'inpara3',          name: 'Inpara 3 (2009) — rawa',       group: 'rekomendasi', hdb: 'RN', blas: null, wereng: null, bercak: null, note: 'JANGAN ditanam di lahan endemis HDB Kalbar (Sambas, Kubu Raya, Sanggau, Kayong Utara). Toleran rendaman 6 hari.' },
   { id: 'situbagendit',     name: 'Situ Bagendit (2003) — amfibi',group: 'rekomendasi', hdb: 'AT', blas: 'AT', wereng: 'RN', bercak: null, note: 'Amfibi (sawah & gogo). Label "agak tahan" PATAH bila N berlebih (kasus Jember KP 40,25%).' },
   // Tabel 1B — varietas tambahan populer/dianjurkan di Kalimantan Barat
-  { id: 'cakrabuana',       name: 'Cakrabuana Agritan (2018)',    group: 'rekomendasi', hdb: 'AT', blas: 'R',  wereng: 'AT', bercak: null, note: 'Super genjah 104 HSS (panen 75–80 HST). Potensi 10,2 t/ha. Agak tahan WBC 1-2-3. Hindari lahan endemis HDB IV/VIII.' },
-  { id: 'padjadjaran',      name: 'Padjadjaran Agritan (2018)',   group: 'rekomendasi', hdb: 'AT', blas: 'R',  wereng: 'AT', bercak: null, note: 'Potensi 11,0 t/ha; genjah 105 HSS. Agak tahan WBC 1-2. Hindari lahan endemis HDB IV/VIII.' },
+  { id: 'cakrabuana',       name: 'Cakrabuana Agritan (2018)',    group: 'rekomendasi', hdb: 'AT', blas: 'R',  wereng: 'AT', bercak: null, panenHst: 78, note: 'Super genjah 104 HSS (panen 75–80 HST). Potensi 10,2 t/ha. Agak tahan WBC 1-2-3. Hindari lahan endemis HDB IV/VIII.' },
+  { id: 'padjadjaran',      name: 'Padjadjaran Agritan (2018)',   group: 'rekomendasi', hdb: 'AT', blas: 'R',  wereng: 'AT', bercak: null, panenHst: 84, note: 'Potensi 11,0 t/ha; genjah 105 HSS. Agak tahan WBC 1-2. Hindari lahan endemis HDB IV/VIII.' },
   { id: 'inpari49jembar',   name: 'Inpari 49 Jembar (2021)',      group: 'rekomendasi', hdb: 'R',  blas: 'R',  wereng: 'R',  bercak: null, note: 'Pasangan rotasi Inpari 32 HDB. Tahan HDB-III (gen IRBB50) + WBC 1-2-3. Potensi 9,57 t/ha.' },
   { id: 'baroma',           name: 'Baroma (2019)',                 group: 'rekomendasi', hdb: 'AT', blas: 'AT', wereng: 'AR', bercak: null, note: 'Beras basmati aromatik. Tahan HDB IV & VIII; agak tahan HDB-III. Sudah dipanen DTPH Kalbar. Segmen premium.' },
   { id: 'inparinutrizinc',  name: 'Inpari IR Nutri Zinc (2019)',  group: 'rekomendasi', hdb: 'AT', blas: 'R',  wereng: null, bercak: null, note: 'Biofortifikasi anti-stunting (Zn 29–34 ppm). Rentan HDB IV & VIII — rotasi wajib tiap musim dengan varietas tahan HDB.' },
@@ -287,6 +289,7 @@ const RICE_VARIETIES = [
 let currentProvinceIndex = 0;
 let currentCityIndex = 0;
 let currentVarietyId = 'umum';
+let currentPlantDate = null;  // 'YYYY-MM-DD' tanggal pindah tanam, disimpan di perangkat
 let lastWeatherUpdate = 0;
 let lastData = null;          // respons /api/weather terakhir
 let lastDiseases = null;      // hasil calculateDiseaseRisks terakhir
@@ -444,9 +447,88 @@ function applyVarietyToDisease(disease, ctx) {
   return disease;
 }
 
+// ── Fase tanaman ─────────────────────────────────────────────────────────────
+
+// Batas fase dihitung mundur dari umur panen P (HST): fase generatif relatif tetap
+// panjangnya, yang memendek pada varietas genjah adalah fase anakan.
+const PHASE_DEFS = [
+  { id: 'anakan',   name: 'Anakan',    short: 'Anakan',  back: null, color: '#CFE6D6',
+    note: 'Tanaman membentuk anakan. Rawan kresek dan blast daun bila lembab.' },
+  { id: 'bunting',  name: 'Bunting',   short: 'Bunting', back: 65,   color: '#6FB38A',
+    note: 'Malai mulai terbentuk. Ini masa rawan blast leher dimulai, hindari tambahan urea.' },
+  { id: 'berbunga', name: 'Berbunga',  short: 'Bunga',   back: 45,   color: '#E2B84B',
+    note: 'Masa paling kritis. Serangan sekarang langsung membuat gabah hampa.' },
+  { id: 'masak',    name: 'Pemasakan', short: 'Masak',   back: 30,   color: '#B98B3E',
+    note: 'Gabah mengisi dan menguning. Siapkan pengeringan petak menjelang panen.' },
+];
+
+// Kerentanan per fase (urutan PHASE_DEFS): 0 rendah, 1 sedang, 2 tinggi.
+// Tinggi menaikkan level satu tingkat bila cuaca sudah ≥ sedang; rendah menurunkan satu tingkat.
+const PHASE_VULN = {
+  blast:  [1, 2, 2, 0],
+  hdb:    [2, 1, 1, 0],
+  wereng: [0, 2, 2, 1],
+  bercak: [0, 1, 1, 1],
+};
+const PHASE_VULN_TEXT = {
+  blast:  ['Blast daun bisa muncul saat lembab panjang.', 'Masuk masa rawan blast leher. Jaga pupuk N, amati daun bendera.', 'Puncak rawan blast leher. Malai bisa patah dan hampa.', ''],
+  hdb:    ['Rawan kresek pada tanaman muda, terutama setelah hujan angin.', 'Hawar bisa naik ke daun atas setelah hujan berangin.', 'Hawar pada daun bendera menurunkan pengisian gabah.', ''],
+  wereng: ['', 'Populasi bisa melonjak. Cek pangkal rumpun tiap minggu.', 'Populasi tinggi berisiko puso. Cek pangkal rumpun tiap minggu.', 'Waspada puso menjelang panen bila populasi masih tinggi.'],
+  bercak: ['', 'Bercak daun lebih berat bila tanaman kurang kalium.', 'Bercak bisa menyerang gabah dan menurunkan mutu.', 'Noda pada gabah menurunkan mutu beras.'],
+};
+
+function panenHst() {
+  return getCurrentVariety().panenHst || DEFAULT_PANEN_HST;
+}
+
+function phaseBounds(P) {
+  return PHASE_DEFS.map((ph, i) => {
+    const from = ph.back === null ? 0 : Math.max(0, P - ph.back);
+    const next = PHASE_DEFS[i + 1];
+    return { ...ph, i, from, to: next ? Math.max(0, P - next.back) : P };
+  });
+}
+
+// Umur tanaman pada tanggal tertentu. idx = -1 bila belum tanam atau sudah lewat panen.
+function cropAgeOn(date) {
+  if (!currentPlantDate) return null;
+  const P = panenHst();
+  const planted = parseDay(currentPlantDate);
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const hst = Math.round((day - planted) / 86400000);
+  const phases = phaseBounds(P);
+  const idx = hst < 0 || hst >= P ? -1 : phases.findIndex(ph => hst >= ph.from && hst < ph.to);
+  return { hst, P, planted, phases, idx, phase: idx >= 0 ? phases[idx] : null };
+}
+
+function phaseShift(diseaseId, levelNum, date) {
+  const age = cropAgeOn(date);
+  if (!age || !age.phase) return 0;
+  const v = PHASE_VULN[diseaseId][age.idx];
+  if (v === 2) return levelNum >= 2 ? 1 : 0;
+  if (v === 0) return -1;
+  return 0;
+}
+
+function applyPhaseToDisease(disease, date) {
+  disease.preLevel = disease.level;
+  const baseNum = LEVEL_TO_NUM[disease.level] || 1;
+  const shift = phaseShift(disease.id, baseNum, date);
+  disease.phaseShift = shift;
+  if (!shift) return disease;
+  const finalLvl = NUM_TO_LEVEL[Math.max(1, Math.min(3, baseNum + shift))];
+  if (finalLvl !== disease.level) {
+    const style   = LEVEL_STYLE[finalLvl];
+    disease.level = finalLvl;
+    disease.icon  = style.icon;
+    disease.cls   = style.cls;
+  }
+  return disease;
+}
+
 // ── Disease Risk ─────────────────────────────────────────────────────────────
 
-function calculateDiseaseRisks(suhu, rh, hujan7hari, cum) {
+function calculateDiseaseRisks(suhu, rh, hujan7hari, cum, onDate = new Date()) {
   const diseases = [];
   const blastFavDays   = cum?.blast_favorable_days  ?? 0;
   const blastFavHours  = cum?.blast_fav_hours       ?? 0;
@@ -564,7 +646,7 @@ function calculateDiseaseRisks(suhu, rh, hujan7hari, cum) {
   }
 
   const ctx = { suhu, rh, hujan7hari, cum };
-  return diseases.map(d => applyVarietyToDisease(d, ctx));
+  return diseases.map(d => applyPhaseToDisease(applyVarietyToDisease(d, ctx), onDate));
 }
 
 function getForecastBaseLevel(suhu_avg, rh_max, hujan7hari, disease) {
@@ -611,15 +693,18 @@ function applyForecastVarietyModifier(baseLevel, diseaseId, suhu_avg, rh_max, hu
   return NUM_TO_LEVEL[Math.max(1, Math.min(3, baseNum + mod))];
 }
 
-function getForecastRiskLevel(suhu_avg, rh_max, hujan7hari, disease) {
+function getForecastRiskLevel(suhu_avg, rh_max, hujan7hari, disease, date) {
   if (disease === 'all') {
-    const levels = ['blast','bercak','hdb','wereng'].map(d => getForecastRiskLevel(suhu_avg, rh_max, hujan7hari, d));
+    const levels = ['blast','bercak','hdb','wereng'].map(d => getForecastRiskLevel(suhu_avg, rh_max, hujan7hari, d, date));
     if (levels.includes('TINGGI')) return 'TINGGI';
     if (levels.includes('SEDANG')) return 'SEDANG';
     return 'RENDAH';
   }
   const base = getForecastBaseLevel(suhu_avg, rh_max, hujan7hari, disease);
-  return applyForecastVarietyModifier(base, disease, suhu_avg, rh_max, hujan7hari);
+  const lvl  = applyForecastVarietyModifier(base, disease, suhu_avg, rh_max, hujan7hari);
+  if (!date) return lvl;
+  const num = LEVEL_TO_NUM[lvl];
+  return NUM_TO_LEVEL[Math.max(1, Math.min(3, num + phaseShift(disease, num, date)))];
 }
 
 // ── Render ───────────────────────────────────────────────────────────────────
@@ -690,7 +775,7 @@ const OPT_INFO = {
       ['Blast leher', 'Pangkal malai busuk coklat kehitaman, malai patah atau hampa.'],
       ['Blast buku', 'Buku batang menghitam dan mudah patah.'],
     ],
-    model: 'Dihitung dari jam dengan RH ≥85% pada suhu 24–28°C selama 7 hari terakhir. Satu hari dihitung mendukung bila kondisi itu terjadi minimal 8 jam. Tinggi jika ≥3 hari mendukung dan hujan ≥20 mm/7 hari. Sedang jika ≥24 jam mendukung atau ≥10 jam lembab berturut-turut. Lalu digeser sesuai ketahanan varietas.',
+    model: 'Dihitung dari jam dengan RH ≥85% pada suhu 24–28°C selama 7 hari terakhir. Satu hari dihitung mendukung bila kondisi itu terjadi minimal 8 jam. Tinggi jika ≥3 hari mendukung dan hujan ≥20 mm/7 hari. Sedang jika ≥24 jam mendukung atau ≥10 jam lembab berturut-turut. Lalu digeser sesuai ketahanan varietas. Bila tanggal tanam diisi, level juga digeser sesuai fase tanaman.',
   },
   hdb: {
     short: 'HDB', name: 'Hawar daun bakteri', inline: 'HDB', latin: 'Xanthomonas oryzae pv. oryzae',
@@ -706,7 +791,7 @@ const OPT_INFO = {
       ['Butiran eksudat', 'Pagi hari tampak tetes kuning seperti embun pada bagian terinfeksi.'],
       ['Kresek', 'Pada tanaman muda, daun layu dan seluruh rumpun mengering.'],
     ],
-    model: 'Jam hujan (>1 mm/jam) selama 7 hari dan jam RH ≥85% selama 72 jam terakhir. Tinggi jika ≥15 jam hujan dan ≥20 jam RH tinggi. Sedang jika ≥8 jam hujan dan ≥10 jam RH tinggi. Lalu digeser sesuai ketahanan varietas (patotipe III).',
+    model: 'Jam hujan (>1 mm/jam) selama 7 hari dan jam RH ≥85% selama 72 jam terakhir. Tinggi jika ≥15 jam hujan dan ≥20 jam RH tinggi. Sedang jika ≥8 jam hujan dan ≥10 jam RH tinggi. Lalu digeser sesuai ketahanan varietas (patotipe III). Bila tanggal tanam diisi, level juga digeser sesuai fase tanaman.',
   },
   bercak: {
     short: 'Bercak', name: 'Bercak coklat', inline: 'bercak coklat', latin: 'Helminthosporium oryzae',
@@ -720,7 +805,7 @@ const OPT_INFO = {
       ['Bercak oval coklat', 'Bulat lonjong seukuran biji wijen, kadang berpusat abu-abu.'],
       ['Bercak pada gabah', 'Kulit gabah bernoda coklat kehitaman, mutu turun.'],
     ],
-    model: 'Jumlah hari dengan RH ≥80% lebih dari 10 jam dalam 7 hari terakhir. Sedang jika ≥3 hari dan hujan ≥15 mm/7 hari. Belum ada data ketahanan varietas untuk bercak coklat.',
+    model: 'Jumlah hari dengan RH ≥80% lebih dari 10 jam dalam 7 hari terakhir. Sedang jika ≥3 hari dan hujan ≥15 mm/7 hari. Belum ada data ketahanan varietas untuk bercak coklat. Bila tanggal tanam diisi, level juga digeser sesuai fase tanaman.',
   },
   wereng: {
     short: 'Wereng', name: 'Wereng batang coklat', inline: 'wereng coklat', latin: 'Nilaparvata lugens',
@@ -734,7 +819,7 @@ const OPT_INFO = {
       ['Koloni di pangkal', 'Serangga coklat kecil berkumpul di pangkal batang dekat air.'],
       ['Puso (hopperburn)', 'Tanaman menguning lalu kering membentuk lingkaran di petak.'],
     ],
-    model: 'Jam kondisi optimal (RH ≥78%, suhu 22–32°C) selama 7 hari. Tinggi jika ≥80 jam dan hujan <60 mm/7 hari. Sedang jika ≥40 jam dan hujan <80 mm. Hujan ≥80 mm/7 hari menekan populasi.',
+    model: 'Jam kondisi optimal (RH ≥78%, suhu 22–32°C) selama 7 hari. Tinggi jika ≥80 jam dan hujan <60 mm/7 hari. Sedang jika ≥40 jam dan hujan <80 mm. Hujan ≥80 mm/7 hari menekan populasi. Bila tanggal tanam diisi, level juga digeser sesuai fase tanaman.',
   },
 };
 
@@ -791,9 +876,9 @@ function cityLabel() {
 // (data estimasi), jatuh ke model harian lama.
 function forecastLevel(day, disease) {
   if (day.cumulative) {
-    const key = currentVarietyId;
+    const key = currentVarietyId + '|' + currentPlantDate;
     if (!day._lv || day._lv.key !== key) {
-      const ds = calculateDiseaseRisks(NaN, NaN, day.hujan_7hari_jam, day.cumulative);
+      const ds = calculateDiseaseRisks(NaN, NaN, day.hujan_7hari_jam, day.cumulative, parseDay(day.date));
       day._lv = { key };
       ds.forEach(d => { day._lv[d.id] = LV[d.level]; });
     }
@@ -801,7 +886,7 @@ function forecastLevel(day, disease) {
     return day._lv[disease];
   }
   const suhuAvg = +((day.suhu_max + day.suhu_min) / 2).toFixed(0);
-  return LV[getForecastRiskLevel(suhuAvg, day.rh_max, day.hujan_7hari, disease)];
+  return LV[getForecastRiskLevel(suhuAvg, day.rh_max, day.hujan_7hari, disease, parseDay(day.date))];
 }
 
 function trendText(nowLv, days, id) {
@@ -876,7 +961,7 @@ function varietyExplanation(d) {
   const name = varietyShortName(v);
   if (!d.reaction) return { text: `${name}: ketahanan terhadap ${diseaseReactionTag(d.id)} tidak diuji, jadi level tidak disesuaikan.` };
   const base = LV_TEXT[LV[d.baseLevel]].toLowerCase();
-  const fin  = LV_TEXT[LV[d.level]].toLowerCase();
+  const fin  = LV_TEXT[LV[d.preLevel || d.level]].toLowerCase();
   const shift = base === fin ? `tetap ${fin}` : `${base} → ${fin}`;
   return {
     text: `${name} ${REACTION_LABEL[d.reaction].toLowerCase()} ${diseaseReactionTag(d.id)}: level cuaca ${shift}` +
@@ -891,6 +976,7 @@ function renderHeaderBits() {
   $('loc-city').textContent = cityLabel();
   $('loc-variety').textContent = v.id === 'umum' ? 'Varietas: belum dipilih' : `Varietas: ${varietyShortName(v)}`;
   $('detail-sub').textContent = `${getCurrentCity().name} · ${v.id === 'umum' ? 'varietas umum' : varietyShortName(v)}`;
+  renderCrop();
 }
 
 function setStatus(kind, message) {
@@ -930,6 +1016,12 @@ function renderHero() {
     ? `Kelembaban tinggi ${cum.high_humid_days} dari 7 hari terakhir, hujan ${mm} mm.`
     : `Tidak ada hari sangat lembab dalam 7 hari terakhir, hujan ${mm} mm.`);
   else parts.push(`Saat ini RH ${cur.rh}%, suhu ${fmtNum(cur.suhu)}°C, hujan 7 hari ${mm} mm.`);
+
+  const raised = focus.filter(d => d.phaseShift > 0);
+  if (raised.length) {
+    const age = cropAgeOn(new Date());
+    parts.push(`Padi umur ${age.hst} HST, fase ${age.phase.name.toLowerCase()}: masa rawan ${joinNames(raised.map(d => OPT_INFO[d.id].inline))}.`);
+  }
 
   const fc = lastData.forecast || [];
   const next = fc.slice(1, 8).map((day, i) => ({ i: i + 1, day, lv: forecastLevel(day, 'all') }));
@@ -1113,6 +1205,222 @@ function renderHome() {
   renderForecast();
 }
 
+// ── Render: Umur padi ────────────────────────────────────────────────────────
+
+const VULN_TEXT  = ['Rendah', 'Sedang', 'Tinggi'];
+const VULN_CLASS = ['vc-low', 'vc-med', 'vc-high'];
+const WATCH_NAME = { blast: 'Blast', hdb: 'Hawar daun bakteri', wereng: 'Wereng coklat', bercak: 'Bercak coklat' };
+
+function fmtDayMonth(date) { return `${date.getDate()} ${MONTHS[date.getMonth()]}`; }
+function addDays(date, n) { return new Date(date.getFullYear(), date.getMonth(), date.getDate() + n); }
+
+// Nama OPT yang paling rawan di fase ini, untuk kalimat ringkas
+function phaseWatchInline(idx) {
+  const names = { blast: idx >= 1 ? 'blast leher' : 'blast daun', hdb: idx === 0 ? 'kresek HDB' : 'HDB', wereng: 'wereng', bercak: 'bercak coklat' };
+  return OPT_ORDER.filter(id => PHASE_VULN[id][idx] === 2).map(id => names[id]);
+}
+
+function seasonBar(age, variant) {
+  const pos = Math.max(0, Math.min(100, (age.hst / age.P) * 100));
+  const segs = age.phases.map(ph => el('span', {
+    class: 'season-seg' + (ph.i === age.idx ? ' on' : ''),
+    style: `flex:${ph.to - ph.from} 1 0;background:${ph.color}`,
+  }));
+  const labels = age.phases.map((ph, k) => {
+    const last = k === age.phases.length - 1;
+    const text = variant === 'card' && last ? `Panen ±${fmtDayMonth(addDays(age.planted, age.P))}` : ph.short;
+    return el('span', { class: 'season-label' + (ph.i === age.idx ? ' on' : '') + (last && variant === 'card' ? ' end' : ''), style: `flex:${ph.to - ph.from} 1 0`, text });
+  });
+  const where = age.phase ? `fase ${age.phase.name.toLowerCase()}` : (age.hst < 0 ? 'belum tanam' : 'lewat perkiraan panen');
+  return el('div', { class: `season season-${variant}` }, [
+    el('div', { class: 'season-bar', role: 'img', 'aria-label': `Musim tanam ${age.P} hari. Hari ini ${Math.max(0, age.hst)} HST, ${where}.` }, [
+      ...segs,
+      el('span', { class: 'season-marker', style: `left:${pos.toFixed(1)}%` }),
+    ]),
+    el('div', { class: 'season-labels', 'aria-hidden': 'true' }, labels),
+  ]);
+}
+
+function phaseTitle(age) {
+  if (age.hst < 0) return 'Belum tanam';
+  if (!age.phase) return 'Siap panen';
+  return `Fase ${age.phase.name.toLowerCase()}`;
+}
+
+function phaseNote(age) {
+  if (age.hst < 0) return `Tanggal tanam ${-age.hst} hari lagi. Penyesuaian fase berlaku setelah tanam.`;
+  if (!age.phase) return age.hst > age.P + 14
+    ? 'Musim ini sudah lewat panen. Perbarui tanggal tanam untuk musim berikutnya.'
+    : 'Sudah melewati perkiraan umur panen. Penyesuaian fase tidak dipakai.';
+  return age.phase.note;
+}
+
+const ARROW_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+const WARN_SVG  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg>';
+
+function svgIcon(markup) {
+  const t = document.createElement('template');
+  t.innerHTML = markup;
+  return t.content.firstChild;
+}
+
+function renderCropCard() {
+  const card = $('crop-card');
+  clearChildren(card);
+  const age = cropAgeOn(new Date());
+  card.appendChild(el('div', { class: 'crop-head' }, [
+    el('span', { class: 'crop-eyebrow', text: 'Umur padi saya' }),
+    el('span', { class: 'crop-action', text: age ? 'Atur' : 'Isi' }),
+  ]));
+  if (!age) {
+    card.setAttribute('aria-label', 'Umur padi saya: isi tanggal tanam');
+    card.appendChild(el('span', { class: 'crop-empty-title', text: 'Isi tanggal tanam' }));
+    card.appendChild(el('span', { class: 'crop-empty-text', text: 'Peringatan akan disesuaikan dengan fase padi Anda. Cukup sekali, disimpan di HP ini tanpa akun.' }));
+    return;
+  }
+  card.removeAttribute('aria-label');
+  card.appendChild(el('div', { class: 'crop-age' }, [
+    el('span', { class: 'crop-hst' }, [String(Math.max(0, age.hst)), el('span', { class: 'crop-hst-unit', text: ' HST' })]),
+    el('span', { class: 'crop-phase', text: phaseTitle(age) }),
+  ]));
+  card.appendChild(seasonBar(age, 'card'));
+  const watch = age.phase ? phaseWatchInline(age.idx) : [];
+  let msg;
+  if (watch.length) {
+    msg = el('span', { class: 'crop-alert-text' }, ['Masuk masa rawan ']);
+    watch.forEach((w, i) => {
+      if (i) msg.appendChild(document.createTextNode(i === watch.length - 1 ? ' dan ' : ', '));
+      msg.appendChild(el('b', { text: w }));
+    });
+    msg.appendChild(document.createTextNode('. Lihat yang perlu diwaspadai.'));
+  } else {
+    msg = el('span', { class: 'crop-alert-text', text: phaseNote(age) });
+  }
+  card.appendChild(el('div', { class: 'crop-alert' + (watch.length ? '' : ' calm') }, [
+    watch.length ? svgIcon(WARN_SVG) : null, msg, svgIcon(ARROW_SVG),
+  ]));
+}
+
+function renderUmur() {
+  const v = getCurrentVariety();
+  $('umur-sub').textContent = `${getCurrentCity().name} · ${v.id === 'umum' ? 'varietas umum' : varietyShortName(v)}`;
+  const input = $('plant-date');
+  if (input.value !== (currentPlantDate || '')) input.value = currentPlantDate || '';
+  $('plant-clear').hidden = !currentPlantDate;
+  const P = panenHst();
+  $('umur-variety-note').textContent = v.panenHst
+    ? `Umur panen ${varietyShortName(v)} ±${P} HST. Disimpan di HP ini, tanpa akun.`
+    : `Umur panen dianggap ±${P} HST (varietas umur sedang)${v.id === 'umum' ? '. Pilih varietas untuk perkiraan lebih tepat' : ''}. Disimpan di HP ini, tanpa akun.`;
+
+  const age = cropAgeOn(new Date());
+  const status = $('umur-status');
+  clearChildren(status);
+  status.hidden = !age;
+  $('umur-watch-sec').hidden = !age;
+  $('umur-agenda-sec').hidden = !age;
+  if (age) {
+    const harvest = addDays(age.planted, age.P);
+    status.appendChild(el('div', { class: 'umur-status-top' }, [
+      el('div', { class: 'umur-status-col' }, [
+        el('span', { class: 'eyebrow', text: 'Hari ini' }),
+        el('span', { class: 'umur-hst' }, [String(Math.max(0, age.hst)), el('span', { class: 'umur-hst-unit', text: ' HST' })]),
+      ]),
+      el('div', { class: 'umur-status-col end' }, [
+        el('span', { class: 'umur-phase', text: phaseTitle(age) }),
+        el('span', { class: 'umur-harvest', text: `Panen ±${fmtDayMonth(harvest)} ${harvest.getFullYear()}` }),
+      ]),
+    ]));
+    status.appendChild(seasonBar(age, 'status'));
+    status.appendChild(el('p', { class: 'umur-note', text: phaseNote(age) }));
+  }
+
+  // Rawan di fase ini
+  const watch = $('umur-watch');
+  clearChildren(watch);
+  if (age && age.phase) {
+    const items = OPT_ORDER
+      .map(id => ({ id, l: PHASE_VULN[id][age.idx], text: PHASE_VULN_TEXT[id][age.idx] }))
+      .filter(w => w.l >= 1 && w.text)
+      .sort((a, b) => b.l - a.l)
+      .slice(0, 3);
+    items.forEach(w => watch.appendChild(el('a', { class: 'watch', href: `#/opt/${w.id}` }, [
+      el('span', { class: `pill ${LV_CLASS[w.l]}`, text: VULN_TEXT[w.l].toUpperCase() }),
+      el('span', { class: 'watch-body' }, [
+        el('span', { class: 'watch-name', text: WATCH_NAME[w.id] }),
+        el('span', { class: 'watch-text', text: w.text }),
+      ]),
+    ])));
+    if (!items.length) watch.appendChild(el('p', { class: 'watch-none', text: 'Tidak ada OPT dengan kerentanan khusus di fase ini. Tetap ikuti risiko cuaca harian.' }));
+  } else if (age) {
+    watch.appendChild(el('p', { class: 'watch-none', text: phaseNote(age) }));
+  }
+
+  // Matriks kerentanan
+  const mx = $('umur-matrix');
+  clearChildren(mx);
+  const cur = age ? age.idx : -1;
+  mx.appendChild(el('div', { class: 'vm-row' }, [
+    el('span'),
+    ...PHASE_DEFS.map((ph, i) => el('span', { class: 'vm-head' + (i === cur ? ' on' : ''), text: ph.short })),
+  ]));
+  OPT_ORDER.forEach(id => mx.appendChild(el('div', { class: 'vm-row' }, [
+    el('span', { class: 'vm-name', text: OPT_INFO[id].short }),
+    ...PHASE_VULN[id].map((l, i) => el('span', { class: `vm-cell ${VULN_CLASS[l]}` + (i === cur ? ' on' : ''), text: VULN_TEXT[l] })),
+  ])));
+
+  // Agenda
+  const ag = $('umur-agenda');
+  clearChildren(ag);
+  if (!age) return;
+  const steps = [
+    { at: 0, text: 'Tanam' },
+    { at: Math.max(1, P - 70), text: 'Pupuk susulan terakhir sebelum primordia' },
+    { at: P - 50, text: 'Mulai amati leher malai setiap pagi' },
+    { at: P - 15, text: 'Keringkan petak menjelang panen' },
+    { at: P, text: 'Perkiraan panen' },
+  ];
+  const nextIdx = steps.findIndex(s => s.at > age.hst);
+  steps.forEach((s, k) => {
+    const state = s.at <= age.hst ? 'done' : (k === nextIdx ? 'next' : 'todo');
+    ag.appendChild(el('li', { class: `ag ag-${state}` }, [
+      el('span', { class: 'ag-rail', 'aria-hidden': 'true' }, [el('span', { class: 'ag-dot' }), el('span', { class: 'ag-line' })]),
+      el('span', { class: 'ag-body' }, [
+        el('span', { class: 'ag-when', text: `${fmtDayMonth(addDays(age.planted, s.at))} · ${s.at} HST${state === 'next' ? ' · berikutnya' : ''}` }),
+        el('span', { class: 'ag-text', text: s.text }),
+        state === 'done' ? el('span', { class: 'sr-only', text: '(sudah lewat)' }) : null,
+      ]),
+    ]));
+  });
+}
+
+function renderCrop() {
+  renderCropCard();
+  if (!$('view-umur').hidden) renderUmur();
+}
+
+function setPlantDate(val) {
+  currentPlantDate = /^\d{4}-\d{2}-\d{2}$/.test(val || '') && !isNaN(parseDay(val)) ? val : null;
+  try {
+    if (currentPlantDate) localStorage.setItem(PLANT_DATE_STORAGE_KEY, currentPlantDate);
+    else localStorage.removeItem(PLANT_DATE_STORAGE_KEY);
+  } catch (_) {}
+  if (lastData) recomputeAndRender();
+  else renderHeaderBits();
+}
+
+function phaseExplanation(d) {
+  const age = cropAgeOn(new Date());
+  if (!age) return null;
+  if (!age.phase) return `${phaseTitle(age)}: level tidak digeser fase tanaman.`;
+  const v = PHASE_VULN[d.id][age.idx];
+  const pre = LV_TEXT[LV[d.preLevel || d.level]].toLowerCase();
+  const fin = LV_TEXT[LV[d.level]].toLowerCase();
+  const shift = pre === fin ? `tetap ${fin}` : `${pre} → ${fin}`;
+  const why = v === 2 ? (d.phaseShift ? 'fase paling rawan' : 'fase rawan, tapi cuaca belum mendukung')
+    : v === 0 ? 'fase ini kurang rawan' : 'kerentanan sedang';
+  return `Umur ${age.hst} HST, fase ${age.phase.name.toLowerCase()} (${why}): level ${shift}.`;
+}
+
 // ── Render: Detail OPT ───────────────────────────────────────────────────────
 
 let currentDetailId = null;
@@ -1206,6 +1514,13 @@ function renderDetail(id) {
   clearChildren(vbox);
   vbox.appendChild(el('span', { text: vx.text + ' ' }));
   if (vx.pick) vbox.appendChild(el('button', { type: 'button', class: 'link-btn', text: 'Pilih varietas', onclick: openSheet }));
+  vbox.appendChild(el('br'));
+  const px = phaseExplanation(d);
+  if (px) vbox.appendChild(el('span', { text: px }));
+  else {
+    vbox.appendChild(el('span', { text: 'Tanggal tanam belum diisi, jadi level belum disesuaikan dengan fase tanaman. ' }));
+    vbox.appendChild(el('a', { href: '#/umur', class: 'link-btn', text: 'Isi tanggal tanam' }));
+  }
 
   const fc = $('detail-forecast');
   clearChildren(fc);
@@ -1219,21 +1534,32 @@ function renderDetail(id) {
 
 function route() {
   const m = location.hash.match(/^#\/opt\/(blast|hdb|bercak|wereng)$/);
-  const home = $('view-home'), detail = $('view-detail');
+  const home = $('view-home'), detail = $('view-detail'), umur = $('view-umur');
   if (m) {
     home.hidden = true;
+    umur.hidden = true;
     detail.hidden = false;
     renderDetail(m[1]);
     document.title = `${OPT_INFO[m[1]].name} — PantauPadi`;
     window.scrollTo(0, 0);
     $('detail-heading').focus({ preventScroll: true });
-  } else {
-    const wasDetail = !detail.hidden;
+  } else if (location.hash === '#/umur') {
+    home.hidden = true;
     detail.hidden = true;
+    umur.hidden = false;
+    currentDetailId = null;
+    renderUmur();
+    document.title = 'Umur padi saya — PantauPadi';
+    window.scrollTo(0, 0);
+    $('umur-heading').focus({ preventScroll: true });
+  } else {
+    const wasHome = !home.hidden;
+    detail.hidden = true;
+    umur.hidden = true;
     home.hidden = false;
     currentDetailId = null;
     document.title = 'PantauPadi — Prediksi Risiko OPT Padi Berbasis Cuaca Realtime';
-    if (wasDetail) window.scrollTo(0, 0);
+    if (!wasHome) window.scrollTo(0, 0);
   }
 }
 
@@ -1245,6 +1571,8 @@ function shareAlert(optId) {
   const url = `https://pantau.agroinovasi.my.id/${optId ? '#/opt/' + optId : ''}`;
   const lines = [`PantauPadi · ${cityLabel()}`];
   if (v.id !== 'umum') lines.push(`Varietas: ${varietyShortName(v)}`);
+  const age = cropAgeOn(new Date());
+  if (age && age.phase) lines.push(`Umur padi: ${age.hst} HST (fase ${age.phase.name.toLowerCase()})`);
   lines.push('');
   const ids = optId ? [optId] : OPT_ORDER;
   ids.forEach(id => lines.push(`${OPT_INFO[id].name}: risiko ${LV_TEXT[LV[diseaseById(id).level]].toUpperCase()}`));
@@ -1449,6 +1777,8 @@ function init() {
   try {
     const stored = localStorage.getItem(VARIETY_STORAGE_KEY);
     if (stored && RICE_VARIETIES.some(v => v.id === stored)) currentVarietyId = stored;
+    const pd = localStorage.getItem(PLANT_DATE_STORAGE_KEY);
+    if (pd && /^\d{4}-\d{2}-\d{2}$/.test(pd) && !isNaN(parseDay(pd))) currentPlantDate = pd;
   } catch (_) {}
 
   renderHeaderBits();
@@ -1461,6 +1791,8 @@ function init() {
     $('wtab-' + t).addEventListener('click', () => { currentWeatherTab = t; renderWeatherChart(); });
   });
   $('share-home').addEventListener('click', () => shareAlert(null));
+  $('plant-date').addEventListener('change', e => setPlantDate(e.target.value));
+  $('plant-clear').addEventListener('click', () => { setPlantDate(null); $('plant-date').focus(); });
   $('share-detail').addEventListener('click', () => shareAlert(currentDetailId));
   $('share-detail-top').addEventListener('click', () => shareAlert(currentDetailId));
 

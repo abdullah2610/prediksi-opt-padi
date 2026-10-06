@@ -21,6 +21,11 @@
   --low: #B9DCC5;  --low-soft: #E6F2EA;  --low-text: #1E5B36;  --low-tint: #EEF6F0;  --low-line: #7FB592;
   --meter-high: #B42318; --meter-med: #C77A16; --meter-low: #3F8A5A;
   --skeleton: #E7ECE4;
+  --vc-low-bg: #EEF2EC; --vc-low-fg: #5B665E;
+  --vc-med-bg: #F7D6A6; --vc-med-fg: #4A2B05;
+  --vc-high-bg: #B42318; --vc-high-fg: #FFFFFF;
+  --alert-bg: #FFF6E3; --alert-fg: #4A2B05; --alert-ico: #8A4B07;
+  --ag-todo: #A9B4A6; --ag-next: #C77A16;
   color-scheme: light;
 }
 
@@ -35,6 +40,11 @@
     --low: #4E8E64;  --low-soft: #1B2E22;  --low-text: #A8D9B9;  --low-tint: #16241B;  --low-line: #4E8E64;
     --meter-high: #E5584A; --meter-med: #E8A13A; --meter-low: #5FA778;
     --skeleton: #233027;
+    --vc-low-bg: #233027; --vc-low-fg: #9AA59D;
+    --vc-med-bg: #5A3F14; --vc-med-fg: #F3C784;
+    --vc-high-bg: #C2392C; --vc-high-fg: #FFFFFF;
+    --alert-bg: #2A2214; --alert-fg: #F3C784; --alert-ico: #F3C784;
+    --ag-todo: #4A574E; --ag-next: #E8A13A;
     color-scheme: dark;
   }
 }
@@ -321,3 +331,96 @@ button { cursor: pointer; }
 .thanks .btn-outline { margin-top: 8px; }
 .thanks-ico { width: 56px; height: 56px; border-radius: 999px; background: var(--brand-soft); color: var(--link); display: flex; align-items: center; justify-content: center; }
 .detail-title .brand-sub a { color: inherit; }
+
+/* ── Umur padi: kartu beranda ── */
+.section-tight { padding-top: 14px; }
+.crop-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; text-decoration: none; color: var(--ink); }
+.crop-card:hover { border-color: var(--line-strong); }
+.crop-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.crop-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.crop-action { font-size: 13px; font-weight: 700; color: var(--link); }
+.crop-age { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.crop-hst { font-size: 34px; line-height: 1; font-weight: 800; letter-spacing: -0.03em; }
+.crop-hst-unit { font-size: 16px; font-weight: 700; letter-spacing: 0; color: var(--ink2); }
+.crop-phase { font-size: 15px; font-weight: 700; color: var(--link); }
+.crop-empty-title { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.crop-empty-text { font-size: 13px; line-height: 1.5; color: var(--ink2); }
+.crop-alert { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--alert-bg); color: var(--alert-fg); }
+.crop-alert svg { flex: 0 0 auto; }
+.crop-alert svg:first-child { color: var(--alert-ico); }
+.crop-alert.calm { background: var(--brand-soft); color: var(--ink2); }
+.crop-alert-text { flex: 1; font-size: 13px; line-height: 1.45; }
+
+/* ── Bar musim tanam ── */
+.season { display: flex; flex-direction: column; gap: 6px; }
+.season-bar { position: relative; display: flex; gap: 3px; height: 12px; }
+.season-seg { min-width: 0; border-radius: 2px; }
+.season-seg:first-child { border-radius: 6px 2px 2px 6px; }
+.season-seg:nth-last-child(2) { border-radius: 2px 6px 6px 2px; }
+.season-marker { position: absolute; top: -5px; width: 4px; height: 22px; margin-left: -2px; border-radius: 2px; background: var(--ink); box-shadow: 0 0 0 2px var(--surface); }
+.season-labels { display: flex; gap: 3px; font-size: 10px; font-weight: 600; color: var(--muted); }
+.season-label { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.season-label.end { overflow: visible; }
+.season-label.end { text-align: right; }
+.season-status { gap: 8px; }
+.season-status .season-bar { height: 14px; }
+.season-status .season-seg { opacity: .55; }
+.season-status .season-seg.on { opacity: 1; }
+.season-status .season-seg:first-child { border-radius: 7px 2px 2px 7px; }
+.season-status .season-seg:nth-last-child(2) { border-radius: 2px 7px 7px 2px; }
+.season-status .season-marker { top: -6px; height: 26px; background: #FFFFFF; box-shadow: 0 0 0 2px var(--brand); }
+.season-status .season-labels { font-size: 11px; color: #CDE8D7; }
+.season-status .season-label.on { color: #FFFFFF; font-weight: 800; }
+
+/* ── Umur padi: halaman ── */
+.umur-input { gap: 12px; }
+.umur-input .field label { font-size: 13px; color: var(--ink); }
+.umur-input input[type="date"] { font-size: 16px; color: var(--ink); }
+.umur-input .link-btn { align-self: flex-start; min-height: 32px; font-size: 13px; }
+.umur-status { margin: 14px 16px 0; padding: 20px; border-radius: 20px; background: var(--brand); color: #F7FAF5; display: flex; flex-direction: column; gap: 16px; }
+.umur-status-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.umur-status-col { display: flex; flex-direction: column; gap: 4px; }
+.umur-status-col.end { align-items: flex-end; text-align: right; }
+.umur-hst { font-size: 52px; line-height: .95; font-weight: 800; letter-spacing: -0.04em; color: #FFFFFF; }
+.umur-hst-unit { font-size: 18px; font-weight: 700; letter-spacing: 0; color: #CDE8D7; }
+.umur-phase { font-size: 18px; font-weight: 800; color: #FFFFFF; }
+.umur-harvest { font-size: 12px; color: #CDE8D7; }
+.umur-note { font-size: 13px; line-height: 1.5; color: #E4F2E9; }
+
+.watch-list { display: flex; flex-direction: column; gap: 8px; }
+.watch { display: flex; gap: 12px; align-items: flex-start; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; text-decoration: none; color: var(--ink); }
+.watch:hover { border-color: var(--line-strong); }
+.watch .pill { flex: 0 0 auto; min-width: 62px; text-align: center; font-size: 10px; padding: 4px 8px; margin-top: 2px; }
+.watch-body { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.watch-name { font-size: 15px; font-weight: 700; }
+.watch-text { font-size: 13px; line-height: 1.5; color: var(--ink2); }
+.watch-none { padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; font-size: 14px; color: var(--ink2); }
+
+.vmatrix-card { padding: 14px; gap: 6px; }
+.vmatrix { display: flex; flex-direction: column; gap: 6px; }
+.vm-row { display: grid; grid-template-columns: 76px repeat(4, minmax(0, 1fr)); gap: 4px; align-items: center; }
+.vm-name { font-size: 12px; font-weight: 700; }
+.vm-head { font-size: 11px; font-weight: 700; text-align: center; padding: 4px 0; border-radius: 6px; color: var(--muted); }
+.vm-head.on { background: var(--ink); color: var(--bg); }
+.vm-cell { min-height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 10px; font-weight: 700; }
+.vm-cell.on { outline: 2px solid var(--ink); outline-offset: 1px; }
+.vc-low { background: var(--vc-low-bg); color: var(--vc-low-fg); }
+.vc-med { background: var(--vc-med-bg); color: var(--vc-med-fg); }
+.vc-high { background: var(--vc-high-bg); color: var(--vc-high-fg); }
+
+.agenda { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.ag { display: flex; gap: 12px; align-items: stretch; }
+.ag-rail { width: 22px; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
+.ag-dot { flex: 0 0 auto; width: 14px; height: 14px; margin-top: 3px; border-radius: 999px; box-sizing: border-box; background: var(--surface); border: 2px solid var(--ag-todo); }
+.ag-line { flex: 1; width: 2px; background: var(--line); }
+.ag:last-child .ag-line { background: transparent; }
+.ag-done .ag-dot { background: var(--brand); border-color: var(--brand); }
+.ag-done .ag-line { background: var(--brand); }
+.ag-next .ag-dot { border: 3px solid var(--ag-next); }
+.ag-body { flex: 1; display: flex; flex-direction: column; gap: 2px; padding-bottom: 18px; }
+.ag-when { font-size: 12px; font-weight: 700; color: var(--muted); }
+.ag-next .ag-when { color: var(--med-text); }
+.ag-text { font-size: 14px; line-height: 1.45; font-weight: 500; }
+.ag-done .ag-text { color: var(--muted); text-decoration: line-through; }
+.ag-next .ag-text { font-weight: 700; }
+a.btn-primary { text-decoration: none; }
