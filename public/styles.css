@@ -52,7 +52,7 @@ body {
 a { color: var(--link); }
 h1, h2, p { margin: 0; }
 h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--med); outline-offset: 2px; }
 [hidden] { display: none !important; }
@@ -252,3 +252,35 @@ button { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before { animation: none !important; transition: none !important; }
 }
+
+/* ── Halaman masukan ── */
+.intro { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
+.intro h1 { font-size: 24px; line-height: 1.2; font-weight: 800; letter-spacing: -0.02em; }
+.intro p { font-size: 14px; line-height: 1.55; }
+.fb-form .card { gap: 22px; }
+.fb-field { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.fb-field legend, .fb-field > label { font-size: 13px; font-weight: 700; color: var(--ink2); padding: 0; margin-bottom: 10px; }
+.fb-field > label { margin-bottom: 0; }
+.fb-field legend .muted, .fb-field label .muted { font-weight: 500; }
+.stars { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.star { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 10px; }
+.star svg { fill: var(--line-strong); transition: fill .1s, transform .1s; }
+.star.on svg { fill: var(--med); transform: scale(1.06); }
+.stars input:focus-visible + .star { outline: 3px solid var(--med); outline-offset: 0; }
+.rating-label { margin-left: 8px; font-size: 14px; font-weight: 700; color: var(--link); }
+.chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip-check { position: relative; }
+.chip-check input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chip-check span { min-height: 40px; display: inline-flex; align-items: center; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 700; background: var(--surface); border: 1px solid var(--line-strong); cursor: pointer; }
+.chip-check input:checked + span { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.chip-check input:focus-visible + span { outline: 3px solid var(--med); outline-offset: 2px; }
+.field textarea { padding: 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 15px; line-height: 1.5; resize: vertical; min-height: 110px; }
+.counter { align-self: flex-end; }
+.fb-status { font-size: 13px; color: var(--high-text); background: var(--high-soft); border: 1px solid var(--high-line); border-radius: 12px; padding: 10px 14px; }
+.btn-primary:disabled { opacity: .6; cursor: progress; }
+.thanks { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; outline: none; }
+.thanks h1 { font-size: 20px; font-weight: 800; }
+.thanks p { font-size: 14px; }
+.thanks .btn-outline { margin-top: 8px; }
+.thanks-ico { width: 56px; height: 56px; border-radius: 999px; background: var(--brand-soft); color: var(--link); display: flex; align-items: center; justify-content: center; }
+.detail-title .brand-sub a { color: inherit; }

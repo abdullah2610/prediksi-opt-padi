@@ -9,7 +9,7 @@
   <meta name="description" content="Kirim masukan, saran, atau laporan pengalaman menggunakan PantauPadi — aplikasi prediksi risiko OPT padi berbasis cuaca BRMP Kalimantan Barat.">
   <meta name="robots" content="noindex, follow">
   <meta name="author" content="BRMP Kalimantan Barat">
-  <meta name="theme-color" content="#15803d">
+  <meta name="theme-color" content="#14532D">
   <link rel="canonical" href="https://pantau.agroinovasi.my.id/masukan.html">
 
   <!-- Open Graph -->
@@ -56,216 +56,165 @@
   }
   </script>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .star-btn { background:none; border:none; cursor:pointer; padding:2px 3px; font-size:32px; line-height:1; transition:transform .1s,color .1s }
-    .chip { cursor:pointer; transition:background .15s,color .15s,border-color .15s }
-    .chip.selected { background:#16a34a; color:#fff; border-color:#16a34a }
-  </style>
+  <!-- Fonts & styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
-
-  <header class="bg-green-700 text-white shadow-lg sticky top-0 z-20" role="banner">
-    <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-      <a href="/" class="text-white text-xl leading-none" aria-label="Kembali ke beranda">←</a>
-      <div>
-        <h1 class="text-lg font-bold leading-tight">💬 Beri Masukan</h1>
-        <p class="text-green-200 text-xs">
-          <a href="/" class="hover:text-white transition-colors">PantauPadi</a> · BRMP Kalimantan Barat
-        </p>
-      </div>
+<body>
+<div class="app">
+  <header class="topbar topbar-detail">
+    <a href="/" class="icon-btn" aria-label="Kembali ke beranda">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <div class="detail-title">
+      <span class="detail-heading">Beri masukan</span>
+      <span class="brand-sub"><a href="/">PantauPadi</a> · BRMP Kalimantan Barat</span>
     </div>
   </header>
 
-  <!-- Breadcrumb (visual) -->
-  <nav class="max-w-2xl mx-auto px-4 pt-3 pb-0" aria-label="Breadcrumb">
-    <ol class="flex items-center gap-1 text-xs text-gray-400">
-      <li><a href="/" class="hover:text-green-600 underline">Beranda</a></li>
-      <li aria-hidden="true">›</li>
-      <li class="text-gray-600 font-medium" aria-current="page">Beri Masukan</li>
-    </ol>
-  </nav>
+  <main id="main-content">
+    <form id="feedback-form" class="fb-form" novalidate>
+      <section class="intro pad-x">
+        <h1>Bagaimana pengalaman Anda?</h1>
+        <p class="ink2">Bantu kami meningkatkan PantauPadi. Masukan Anda langsung dipakai untuk pengembangan layanan prediksi OPT padi ini.</p>
+      </section>
 
-  <main class="max-w-2xl mx-auto px-4 py-5 space-y-5" id="main-content">
+      <section class="section">
+        <div class="card">
+          <fieldset class="fb-field">
+            <legend>Penilaian keseluruhan</legend>
+            <div class="stars" id="stars">
+              <input type="radio" name="rating" id="r1" value="1" class="sr-only"><label for="r1" class="star" title="Kurang"><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span class="sr-only">1 bintang, Kurang</span></label>
+              <input type="radio" name="rating" id="r2" value="2" class="sr-only"><label for="r2" class="star" title="Cukup"><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span class="sr-only">2 bintang, Cukup</span></label>
+              <input type="radio" name="rating" id="r3" value="3" class="sr-only"><label for="r3" class="star" title="Bermanfaat"><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span class="sr-only">3 bintang, Bermanfaat</span></label>
+              <input type="radio" name="rating" id="r4" value="4" class="sr-only"><label for="r4" class="star" title="Sangat bermanfaat"><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span class="sr-only">4 bintang, Sangat bermanfaat</span></label>
+              <input type="radio" name="rating" id="r5" value="5" class="sr-only"><label for="r5" class="star" title="Luar biasa"><svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg><span class="sr-only">5 bintang, Luar biasa</span></label>
+              <span id="rating-label" class="rating-label" aria-live="polite"></span>
+            </div>
+          </fieldset>
 
-    <!-- Form -->
-    <section id="feedback-form" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-5" aria-label="Formulir masukan">
+          <fieldset class="fb-field">
+            <legend>Topik masukan <span class="muted">(boleh lebih dari satu)</span></legend>
+            <div class="chip-wrap">
+              <label class="chip-check"><input type="checkbox" name="topik" value="Tidak akurat"><span>Tidak akurat</span></label>
+              <label class="chip-check"><input type="checkbox" name="topik" value="Data terlambat"><span>Data terlambat</span></label>
+              <label class="chip-check"><input type="checkbox" name="topik" value="Sulit dipahami"><span>Sulit dipahami</span></label>
+              <label class="chip-check"><input type="checkbox" name="topik" value="Fitur kurang"><span>Fitur kurang</span></label>
+              <label class="chip-check"><input type="checkbox" name="topik" value="Ada kesalahan"><span>Ada kesalahan</span></label>
+              <label class="chip-check"><input type="checkbox" name="topik" value="Sangat bermanfaat"><span>Sangat bermanfaat</span></label>
+              <label class="chip-check"><input type="checkbox" name="topik" value="Lainnya"><span>Lainnya</span></label>
+            </div>
+          </fieldset>
 
-      <p class="text-sm text-gray-600">
-        Bantu kami meningkatkan <strong>PantauPadi</strong> dengan berbagi pengalaman Anda.
-        Masukan Anda langsung digunakan untuk pengembangan layanan prediksi OPT padi ini.
-      </p>
-
-      <!-- Categories -->
-      <fieldset>
-        <legend class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-          Topik masukan <span class="text-gray-400 font-normal normal-case">(boleh pilih lebih dari satu)</span>
-        </legend>
-        <div id="chip-container" class="flex flex-wrap gap-2" role="group" aria-label="Pilih topik masukan">
-          <button type="button" class="chip border border-gray-300 rounded-full px-3 py-1 text-sm text-gray-600 bg-gray-50"
-                  data-val="Tidak akurat">Tidak akurat</button>
-          <button type="button" class="chip border border-gray-300 rounded-full px-3 py-1 text-sm text-gray-600 bg-gray-50"
-                  data-val="Data terlambat">Data terlambat</button>
-          <button type="button" class="chip border border-gray-300 rounded-full px-3 py-1 text-sm text-gray-600 bg-gray-50"
-                  data-val="Sulit dipahami">Sulit dipahami</button>
-          <button type="button" class="chip border border-gray-300 rounded-full px-3 py-1 text-sm text-gray-600 bg-gray-50"
-                  data-val="Fitur kurang">Fitur kurang</button>
-          <button type="button" class="chip border border-gray-300 rounded-full px-3 py-1 text-sm text-gray-600 bg-gray-50"
-                  data-val="Ada kesalahan">Ada kesalahan</button>
-          <button type="button" class="chip border border-gray-300 rounded-full px-3 py-1 text-sm text-gray-600 bg-gray-50"
-                  data-val="Sangat bermanfaat">Sangat bermanfaat</button>
-          <button type="button" class="chip border border-gray-300 rounded-full px-3 py-1 text-sm text-gray-600 bg-gray-50"
-                  data-val="Lainnya">Lainnya</button>
-        </div>
-      </fieldset>
-
-      <!-- Stars -->
-      <fieldset>
-        <legend class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Penilaian keseluruhan</legend>
-        <div class="flex items-center gap-1">
-          <div id="stars" class="flex gap-0.5" role="group" aria-label="Beri bintang penilaian">
-            <button class="star-btn" data-n="1" aria-label="1 bintang — Kurang">★</button>
-            <button class="star-btn" data-n="2" aria-label="2 bintang — Cukup">★</button>
-            <button class="star-btn" data-n="3" aria-label="3 bintang — Bermanfaat">★</button>
-            <button class="star-btn" data-n="4" aria-label="4 bintang — Sangat Bermanfaat">★</button>
-            <button class="star-btn" data-n="5" aria-label="5 bintang — Luar Biasa">★</button>
+          <div class="fb-field field">
+            <label for="feedback-text">Komentar <span class="muted">(opsional)</span></label>
+            <textarea id="feedback-text" rows="4" maxlength="500" placeholder="Tuliskan saran, pertanyaan, atau pengalaman Anda menggunakan PantauPadi…"></textarea>
+            <span class="muted small counter" aria-live="polite"><span id="char-count">0</span>/500 karakter</span>
           </div>
-          <span id="rating-label" class="text-sm text-gray-400 ml-2" aria-live="polite"></span>
         </div>
-      </fieldset>
+      </section>
 
-      <!-- Comment -->
-      <div>
-        <label for="feedback-text" class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">
-          Komentar <span class="text-gray-400 font-normal normal-case">(opsional)</span>
-        </label>
-        <textarea id="feedback-text" rows="3" maxlength="500"
-                  placeholder="Tuliskan saran, pertanyaan, atau pengalaman Anda menggunakan PantauPadi..."
-                  class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-green-500 resize-none"></textarea>
-        <p class="text-right text-xs text-gray-400 mt-1" aria-live="polite"><span id="char-count">0</span>/500 karakter</p>
+      <section class="section section-last">
+        <p id="feedback-status" class="fb-status" role="status" aria-live="polite" hidden></p>
+        <button id="submit-btn" type="submit" class="btn-primary">Kirim masukan</button>
+      </section>
+    </form>
+
+    <section id="feedback-thanks" class="section section-last" hidden>
+      <div class="thanks" role="status" tabindex="-1" id="thanks-box">
+        <span class="thanks-ico" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </span>
+        <h1>Terima kasih atas masukan Anda</h1>
+        <p class="ink2">Masukan Anda membantu pengembangan layanan prediksi OPT padi ini.</p>
+        <a href="/" class="btn-outline">Kembali ke beranda</a>
       </div>
-
-      <!-- Submit -->
-      <div class="flex items-center gap-3">
-        <button id="submit-btn" onclick="submitFeedback()" type="button"
-                class="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors">
-          Kirim Masukan
-        </button>
-        <span id="feedback-status" class="text-xs text-gray-400" role="status" aria-live="polite"></span>
-      </div>
-
     </section>
-
-    <!-- Thanks -->
-    <div id="feedback-thanks" class="hidden bg-green-50 border border-green-200 rounded-xl p-6 text-center" role="alert">
-      <div class="text-4xl mb-2" aria-hidden="true">🎉</div>
-      <p class="text-base font-semibold text-green-800">Terima kasih atas masukan Anda!</p>
-      <p class="text-sm text-green-600 mt-1">Masukan Anda membantu pengembangan layanan prediksi OPT padi ini.</p>
-      <a href="/" class="inline-block mt-4 text-sm text-green-700 font-medium underline underline-offset-2">← Kembali ke beranda</a>
-    </div>
-
   </main>
 
-  <footer class="max-w-2xl mx-auto px-4 pb-6 pt-2 text-center text-gray-400 text-xs" role="contentinfo">
-    <address class="not-italic">
-      <strong class="text-gray-500">PantauPadi</strong> — BRMP Kalimantan Barat
+  <footer class="footer" role="contentinfo">
+    <address>
+      <strong>PantauPadi</strong> · Sistem Informasi Prediksi OPT Padi · BRMP Kalimantan Barat.
+      <a href="/">Beranda</a>
     </address>
-    <p class="mt-0.5">
-      <a href="/" class="hover:text-green-600">Beranda</a> ·
-      <a href="/masukan.html" class="hover:text-green-600">Beri Masukan</a>
-    </p>
   </footer>
+</div>
 
-  <script>
-    const FEEDBACK_ENDPOINT = 'https://formspree.io/f/xbdejqea';
-    const RATING_LABELS = ['','Kurang','Cukup','Bermanfaat','Sangat Bermanfaat','Luar Biasa!'];
-    let feedbackRating = 0;
-    const selectedChips = new Set();
+<script>
+  const FEEDBACK_ENDPOINT = 'https://formspree.io/f/xbdejqea';
+  const RATING_LABELS = ['', 'Kurang', 'Cukup', 'Bermanfaat', 'Sangat Bermanfaat', 'Luar Biasa!'];
+  const form   = document.getElementById('feedback-form');
+  const status = document.getElementById('feedback-status');
 
-    // Chips
-    document.querySelectorAll('.chip').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const val = btn.dataset.val;
-        if (selectedChips.has(val)) {
-          selectedChips.delete(val);
-          btn.classList.remove('selected');
-          btn.setAttribute('aria-pressed', 'false');
-        } else {
-          selectedChips.add(val);
-          btn.classList.add('selected');
-          btn.setAttribute('aria-pressed', 'true');
-        }
-      });
-      btn.setAttribute('aria-pressed', 'false');
+  function currentRating() {
+    const r = form.querySelector('input[name="rating"]:checked');
+    return r ? parseInt(r.value, 10) : 0;
+  }
+
+  function renderStars(active) {
+    document.querySelectorAll('#stars .star').forEach((s, i) => s.classList.toggle('on', i < active));
+  }
+
+  form.querySelectorAll('input[name="rating"]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const n = currentRating();
+      renderStars(n);
+      document.getElementById('rating-label').textContent = RATING_LABELS[n] || '';
     });
+  });
+  document.querySelectorAll('#stars .star').forEach((s, i) => {
+    s.addEventListener('mouseenter', () => renderStars(i + 1));
+    s.addEventListener('mouseleave', () => renderStars(currentRating()));
+  });
 
-    // Stars
-    function renderStars(active) {
-      document.querySelectorAll('.star-btn').forEach(btn => {
-        const n = parseInt(btn.dataset.n, 10);
-        btn.style.color     = n <= active ? '#f59e0b' : '#d1d5db';
-        btn.style.transform = n <= active ? 'scale(1.15)' : 'scale(1)';
-      });
+  form.addEventListener('change', () => showStatus(''));
+
+  document.getElementById('feedback-text').addEventListener('input', function () {
+    document.getElementById('char-count').textContent = this.value.length;
+  });
+
+  function showStatus(msg) {
+    status.textContent = msg;
+    status.hidden = !msg;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const rating = currentRating();
+    const topics = [...form.querySelectorAll('input[name="topik"]:checked')].map(c => c.value);
+    if (!rating && topics.length === 0) {
+      showStatus('Pilih bintang atau topik terlebih dahulu.');
+      return;
     }
+    showStatus('');
+    const text = document.getElementById('feedback-text').value.trim();
+    const btn  = document.getElementById('submit-btn');
+    btn.textContent = 'Mengirim…';
+    btn.disabled = true;
 
-    document.querySelectorAll('.star-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        feedbackRating = parseInt(btn.dataset.n, 10);
-        renderStars(feedbackRating);
-        const lbl = document.getElementById('rating-label');
-        lbl.textContent = RATING_LABELS[feedbackRating] || '';
-        lbl.className   = 'text-sm text-green-600 font-medium ml-2';
+    try {
+      const res = await fetch(FEEDBACK_ENDPOINT, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          app:    'PantauPadi — BRMP Kalimantan Barat',
+          rating: rating ? `${rating}/5 — ${RATING_LABELS[rating]}` : '(tidak dinilai)',
+          topik:  topics.length > 0 ? topics.join(', ') : '(tidak dipilih)',
+          saran:  text || '(tidak ada komentar)',
+        }),
       });
-      btn.addEventListener('mouseenter', () => renderStars(parseInt(btn.dataset.n, 10)));
-      btn.addEventListener('mouseleave', () => renderStars(feedbackRating));
-    });
-
-    // Char counter
-    document.getElementById('feedback-text').addEventListener('input', function () {
-      document.getElementById('char-count').textContent = this.value.length;
-    });
-
-    // Submit
-    async function submitFeedback() {
-      const status = document.getElementById('feedback-status');
-
-      if (!feedbackRating && selectedChips.size === 0) {
-        status.textContent = 'Pilih topik atau bintang terlebih dahulu.';
-        status.className   = 'text-xs text-red-500';
-        return;
-      }
-
-      const text = document.getElementById('feedback-text').value.trim();
-      const btn  = document.getElementById('submit-btn');
-      btn.textContent = 'Mengirim...';
-      btn.disabled    = true;
-
-      try {
-        const res = await fetch(FEEDBACK_ENDPOINT, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({
-            app:    'PantauPadi — BRMP Kalimantan Barat',
-            rating: feedbackRating ? `${feedbackRating}/5 — ${RATING_LABELS[feedbackRating]}` : '(tidak dinilai)',
-            topik:  selectedChips.size > 0 ? [...selectedChips].join(', ') : '(tidak dipilih)',
-            saran:  text || '(tidak ada komentar)',
-          }),
-        });
-        if (res.ok) {
-          document.getElementById('feedback-form').classList.add('hidden');
-          document.getElementById('feedback-thanks').classList.remove('hidden');
-        } else {
-          throw new Error('Non-OK');
-        }
-      } catch {
-        btn.textContent = 'Kirim Masukan';
-        btn.disabled    = false;
-        status.textContent = 'Gagal kirim. Coba lagi.';
-        status.className   = 'text-xs text-red-500';
-      }
+      if (!res.ok) throw new Error('Non-OK');
+      form.hidden = true;
+      document.getElementById('feedback-thanks').hidden = false;
+      document.getElementById('thanks-box').focus();
+    } catch {
+      btn.textContent = 'Kirim masukan';
+      btn.disabled = false;
+      showStatus('Gagal mengirim. Periksa koneksi lalu coba lagi.');
     }
-
-    renderStars(0);
-  </script>
+  });
+</script>
 </body>
 </html>
