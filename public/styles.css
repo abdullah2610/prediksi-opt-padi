@@ -228,14 +228,22 @@ button { cursor: pointer; }
 .tabs { padding: 4px 16px 14px; }
 .tab { flex: 0 0 auto; min-height: 44px; padding: 0 16px; display: flex; align-items: center; gap: 8px; border-radius: 999px; font-size: 14px; font-weight: 700; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); }
 .tab.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.detail-hero { margin: 0 16px; padding: 20px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); }
-.detail-hero.hero-lv-high { background: var(--high-tint); border-color: var(--high-line); }
-.detail-hero.hero-lv-med  { background: var(--med-tint);  border-color: var(--med-line); }
-.detail-hero.hero-lv-low  { background: var(--low-tint);  border-color: var(--low-line); }
-.detail-hero-top { display: flex; align-items: center; justify-content: space-between; }
-.detail-hero h1 { font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -0.02em; }
-.latin { font-size: 13px; font-style: italic; color: var(--ink2); }
-.detail-hero p { font-size: 14px; line-height: 1.55; }
+.detail-hero { min-height: 400px; }
+.detail-hero .hero-top { max-width: 270px; }
+@media (min-width: 640px) { .detail-hero .hero-top { max-width: 60%; } }
+.detail-hero h1 { font-size: 28px; line-height: 1.15; }
+.detail-hero .latin { font-size: 13px; font-style: italic; color: #CDE8D7; }
+.hero-fc { padding-bottom: 14px; gap: 8px; }
+.hero-bars .bars { gap: 6px; }
+.hero-bars .bar-col { max-width: 28px; }
+.hero-fc .bar-day { color: #5B665E; }
+.hero-fc .trend-up { color: #9F1D12; } .hero-fc .trend-down { color: #1E5B36; } .hero-fc .trend-flat { color: #3F4A42; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero-fc .bar-day { color: var(--muted); }
+  :root:not([data-theme="light"]) .hero-fc .trend-up { color: var(--high-text); }
+  :root:not([data-theme="light"]) .hero-fc .trend-down { color: var(--low-text); }
+  :root:not([data-theme="light"]) .hero-fc .trend-flat { color: var(--ink2); }
+}
 .meters { display: flex; flex-direction: column; gap: 18px; }
 .meter { display: flex; flex-direction: column; gap: 8px; }
 .meter-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }

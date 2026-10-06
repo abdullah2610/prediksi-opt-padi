@@ -918,10 +918,10 @@ function renderHero() {
   const focus = highs.length ? highs : meds;
   const names = focus.map(d => OPT_INFO[d.id].inline);
 
-  let title, badge, badgeCls;
-  if (highs.length)     { title = `Waspada ${joinNames(names)}`;    badge = 'WASPADA';   badgeCls = 'badge-high'; }
-  else if (meds.length) { title = `Perhatikan ${joinNames(names)}`; badge = 'PERHATIAN'; badgeCls = 'badge-med'; }
-  else                  { title = 'Kondisi relatif aman';           badge = 'AMAN';      badgeCls = 'badge-low'; }
+  let title;
+  if (highs.length)     title = `Waspada ${joinNames(names)}`;
+  else if (meds.length) title = `Perhatikan ${joinNames(names)}`;
+  else                  title = 'Kondisi relatif aman';
 
   const cur = lastData.current, cum = lastData.cumulative;
   const parts = [];
@@ -952,8 +952,7 @@ function renderHero() {
     todo = ['Lanjutkan pengamatan rutin seminggu sekali.'];
   }
 
-  $('hero-badge').className = 'hero-badge ' + badgeCls;
-  $('hero-badge-text').textContent = badge;
+  setBadge('hero', highs.length ? 2 : meds.length ? 1 : 0);
   $('hero').classList.toggle('is-dry', (+cur.hujan_7hari || 0) < 5);
   const topId = focus.length ? focus[0].id : 'blast';
   $('hero-detail').href = `#/opt/${topId}`;
@@ -962,6 +961,23 @@ function renderHero() {
   $('hero-text').textContent = parts.join(' ');
   $('hero-todo').textContent = todo.join(' ');
   $('hero').classList.remove('is-loading');
+}
+
+function forecastBars(fc, id) {
+  return el('span', { class: 'bars' }, fc.map(day => {
+    const l = forecastLevel(day, id);
+    return el('span', { class: 'bar-col' }, [
+      el('span', { class: `bar ${LV_CLASS[l]} h${l}` }),
+      el('span', { class: 'bar-day', text: DAY_TINY[parseDay(day.date).getDay()] }),
+    ]);
+  }));
+}
+
+const HERO_BADGE = [['AMAN', 'badge-low'], ['PERHATIAN', 'badge-med'], ['WASPADA', 'badge-high']];
+
+function setBadge(prefix, lv) {
+  $(prefix + '-badge').className = 'hero-badge ' + HERO_BADGE[lv][1];
+  $(prefix + '-badge-text').textContent = HERO_BADGE[lv][0];
 }
 
 function renderRiskGrid() {
@@ -985,13 +1001,7 @@ function renderRiskGrid() {
       aria += ` Tujuh hari ke depan: ${tr.text}.`;
       children.push(el('span', { class: 'risk-fc', 'aria-hidden': 'true' }, [
         el('span', { class: 'risk-fc-label', text: '7 hari ke depan' }),
-        el('span', { class: 'bars' }, fc.map(day => {
-          const l = forecastLevel(day, id);
-          return el('span', { class: 'bar-col' }, [
-            el('span', { class: `bar ${LV_CLASS[l]} h${l}` }),
-            el('span', { class: 'bar-day', text: DAY_TINY[parseDay(day.date).getDay()] }),
-          ]);
-        })),
+        forecastBars(fc, id),
         el('span', { class: `risk-trend trend-${tr.dir}`, text: tr.text }),
       ]));
     }
@@ -1145,9 +1155,12 @@ function renderDetail(id) {
 
   const hero = $('detail-hero');
   if (!lastData || !lastDiseases) {
-    hero.className = 'detail-hero is-loading';
-    $('detail-pill').textContent = '…';
+    hero.className = 'hero detail-hero is-loading';
+    $('detail-badge').className = 'hero-badge badge-loading';
+    $('detail-badge-text').textContent = 'MEMUAT';
     $('detail-summary').textContent = 'Memuat data cuaca…';
+    clearChildren($('detail-bars'));
+    $('detail-trend').textContent = '';
     clearChildren($('detail-meters'));
     clearChildren($('detail-forecast'));
     $('detail-variety').textContent = '';
@@ -1156,11 +1169,22 @@ function renderDetail(id) {
 
   const d = diseaseById(id);
   const lv = LV[d.level];
-  hero.className = `detail-hero hero-${LV_CLASS[lv]}`;
-  const pill = $('detail-pill');
-  pill.className = `pill pill-solid ${LV_CLASS[lv]}`;
-  pill.textContent = LV_TEXT[lv].toUpperCase();
+  hero.className = 'hero detail-hero' + ((+lastData.current.hujan_7hari || 0) < 5 ? ' is-dry' : '');
+  setBadge('detail', lv);
+  $('detail-level').textContent = `Risiko ${LV_TEXT[lv].toLowerCase()}`;
   $('detail-summary').textContent = optSummary(id);
+  const next7 = (lastData.forecast || []).slice(1, 8);
+  const bars = $('detail-bars');
+  clearChildren(bars);
+  if (next7.length) {
+    bars.appendChild(forecastBars(next7, id));
+    const tr = trendText(lv, next7, id);
+    $('detail-trend').textContent = tr.text;
+    $('detail-trend').className = `risk-trend trend-${tr.dir}`;
+  } else {
+    $('detail-trend').textContent = 'Prakiraan belum tersedia.';
+    $('detail-trend').className = 'risk-trend trend-flat';
+  }
 
   const meters = $('detail-meters');
   clearChildren(meters);
@@ -1411,7 +1435,16 @@ async function fetchAndRender() {
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 
+function initDetailArt() {
+  const art = document.querySelector('#hero .hero-art').cloneNode(true);
+  const pat = art.querySelector('pattern');
+  pat.id = 'pp-rows-detail';
+  art.querySelectorAll('[fill="url(#pp-rows)"]').forEach(n => n.setAttribute('fill', 'url(#pp-rows-detail)'));
+  $('detail-hero').prepend(art);
+}
+
 function init() {
+  initDetailArt();
   restoreLocation();
   try {
     const stored = localStorage.getItem(VARIETY_STORAGE_KEY);

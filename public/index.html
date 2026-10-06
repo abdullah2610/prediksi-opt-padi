@@ -299,16 +299,27 @@
     <main id="detail-main">
       <nav id="detail-tabs" class="tabs" aria-label="Pilih OPT"></nav>
 
-      <section id="detail-hero" class="detail-hero is-loading" aria-labelledby="detail-name">
-        <div class="detail-hero-top">
-          <span id="detail-pill" class="pill pill-solid">…</span>
-          <span class="small ink2">7 hari terakhir</span>
+      <section id="detail-hero" class="hero detail-hero is-loading" aria-labelledby="detail-name">
+        <div class="hero-top">
+          <span id="detail-badge" class="hero-badge badge-loading">
+            <svg class="ico-warn" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg>
+            <svg class="ico-ok" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg>
+            <span id="detail-badge-text">MEMUAT</span>
+          </span>
+          <span class="eyebrow"><span id="detail-level">Risiko</span> · 7 hari terakhir</span>
+          <div>
+            <h1 id="detail-name">--</h1>
+            <span id="detail-latin" class="latin">--</span>
+          </div>
+          <p id="detail-summary">--</p>
         </div>
-        <div>
-          <h1 id="detail-name">--</h1>
-          <span id="detail-latin" class="latin">--</span>
+        <div class="hero-bottom">
+          <div class="hero-todo hero-fc">
+            <span class="hero-todo-label">7 hari ke depan</span>
+            <div id="detail-bars" class="hero-bars"></div>
+            <span id="detail-trend" class="risk-trend"></span>
+          </div>
         </div>
-        <p id="detail-summary">--</p>
       </section>
 
       <section class="section" aria-labelledby="why-title">
