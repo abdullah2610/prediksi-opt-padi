@@ -671,6 +671,7 @@ const LV_TEXT  = ['Rendah', 'Sedang', 'Tinggi'];
 const LV_CLASS = ['lv-low', 'lv-med', 'lv-high'];
 const OPT_ORDER = ['blast', 'hdb', 'bercak', 'wereng'];
 const DAY_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const DAY_TINY  = ['Mg', 'Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb'];
 const DAY_LONG  = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const MONTHS    = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
 
@@ -785,9 +786,33 @@ function cityLabel() {
 
 // ── Model helpers ────────────────────────────────────────────────────────────
 
+// Level prakiraan per hari. Bila API mengirim metrik kumulatif per hari (dihitung dari
+// prakiraan cuaca per jam), pakai model yang sama dengan kondisi saat ini; jika tidak
+// (data estimasi), jatuh ke model harian lama.
 function forecastLevel(day, disease) {
+  if (day.cumulative) {
+    const key = currentVarietyId;
+    if (!day._lv || day._lv.key !== key) {
+      const ds = calculateDiseaseRisks(NaN, NaN, day.hujan_7hari_jam, day.cumulative);
+      day._lv = { key };
+      ds.forEach(d => { day._lv[d.id] = LV[d.level]; });
+    }
+    if (disease === 'all') return Math.max(...OPT_ORDER.map(id => day._lv[id]));
+    return day._lv[disease];
+  }
   const suhuAvg = +((day.suhu_max + day.suhu_min) / 2).toFixed(0);
   return LV[getForecastRiskLevel(suhuAvg, day.rh_max, day.hujan_7hari, disease)];
+}
+
+function trendText(nowLv, days, id) {
+  const lv = days.map(day => forecastLevel(day, id));
+  const dayName = day => DAY_LONG[parseDay(day.date).getDay()];
+  const up = lv.findIndex(l => l > nowLv);
+  const down = lv.findIndex(l => l < nowLv);
+  if (up >= 0) return { text: `Naik ke ${LV_TEXT[lv[up]].toLowerCase()} mulai ${up === 0 ? 'besok' : dayName(days[up])}`, dir: 'up' };
+  if (down >= 0 && lv.slice(down).every(l => l < nowLv)) return { text: `Turun ke ${LV_TEXT[Math.max(...lv.slice(down))].toLowerCase()} mulai ${down === 0 ? 'besok' : dayName(days[down])}`, dir: 'down' };
+  if (down >= 0) return { text: `Sempat turun, lalu ${LV_TEXT[nowLv].toLowerCase()} lagi`, dir: 'flat' };
+  return { text: `Tetap ${LV_TEXT[nowLv].toLowerCase()} 7 hari`, dir: 'flat' };
 }
 
 function diseaseById(id) {
@@ -933,21 +958,35 @@ function renderHero() {
 function renderRiskGrid() {
   const grid = $('risk-grid');
   clearChildren(grid);
-  const fc = (lastData.forecast || []).slice(0, 7);
+  // Batang = besok s.d. 7 hari ke depan (hari ini sudah diwakili label "Sekarang")
+  const fc = (lastData.forecast || []).slice(1, 8);
   OPT_ORDER.forEach(id => {
     const d = diseaseById(id);
     const lv = LV[d.level];
-    const bars = el('span', { class: 'bars', 'aria-hidden': 'true' },
-      fc.map(day => {
-        const l = forecastLevel(day, id);
-        return el('span', { class: `bar ${LV_CLASS[l]} h${l}` });
-      }));
-    const card = el('a', { class: 'risk-card', href: `#/opt/${id}`, 'aria-label': `${OPT_INFO[id].name}: risiko ${LV_TEXT[lv].toLowerCase()}. Lihat detail.` }, [
-      el('span', { class: `pill ${LV_CLASS[lv]}`, text: LV_TEXT[lv].toUpperCase() }),
+    const children = [
+      el('span', { class: 'risk-now' }, [
+        el('span', { class: 'risk-now-label', text: 'Sekarang' }),
+        el('span', { class: `pill ${LV_CLASS[lv]}`, text: LV_TEXT[lv].toUpperCase() }),
+      ]),
       el('span', { class: 'risk-name', text: OPT_INFO[id].name }),
-      bars,
-    ]);
-    grid.appendChild(card);
+    ];
+    let aria = `${OPT_INFO[id].name}: risiko sekarang ${LV_TEXT[lv].toLowerCase()}.`;
+    if (fc.length) {
+      const tr = trendText(lv, fc, id);
+      aria += ` Tujuh hari ke depan: ${tr.text}.`;
+      children.push(el('span', { class: 'risk-fc', 'aria-hidden': 'true' }, [
+        el('span', { class: 'risk-fc-label', text: '7 hari ke depan' }),
+        el('span', { class: 'bars' }, fc.map(day => {
+          const l = forecastLevel(day, id);
+          return el('span', { class: 'bar-col' }, [
+            el('span', { class: `bar ${LV_CLASS[l]} h${l}` }),
+            el('span', { class: 'bar-day', text: DAY_TINY[parseDay(day.date).getDay()] }),
+          ]);
+        })),
+        el('span', { class: `risk-trend trend-${tr.dir}`, text: tr.text }),
+      ]));
+    }
+    grid.appendChild(el('a', { class: 'risk-card', href: `#/opt/${id}`, 'aria-label': aria + ' Lihat detail.' }, children));
   });
 }
 

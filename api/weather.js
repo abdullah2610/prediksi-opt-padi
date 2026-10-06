@@ -23,7 +23,7 @@ async function fetchFromOpenMeteo(lat, lon) {
   return res.json();
 }
 
-function computeCumulativeMetrics(time, temp, rh, rain, startIdx, currentIdx) {
+function computeCumulativeMetrics(time, temp, rh, rain, startIdx, currentIdx, tzOffset = 0) {
   let rh85_hours_7d = 0, rh85_hours_72h = 0, blast_fav_hours = 0;
   let hdb_rain_hours_7d = 0, warm_humid_hours_7d = 0;
   let maxConsecHumid = 0, curConsecHumid = 0;
@@ -32,7 +32,7 @@ function computeCumulativeMetrics(time, temp, rh, rain, startIdx, currentIdx) {
 
   for (let i = startIdx; i <= currentIdx; i++) {
     const r = rh[i], t = temp[i], p = rain[i] || 0;
-    const dk = new Date(time[i] * 1000).toISOString().slice(0, 10);
+    const dk = new Date((time[i] + tzOffset) * 1000).toISOString().slice(0, 10);
     if (!dayBuckets[dk]) dayBuckets[dk] = { rh85: 0, blastFav: 0, humid80: 0 };
 
     if (r >= 85) {
@@ -81,14 +81,15 @@ function parseOpenMeteo(apiData) {
   const rainStart = Math.max(0, currentIdx - 167);
   for (let i = rainStart; i <= currentIdx; i++) hujan7hari += precipitation[i] || 0;
 
-  const cur = history[history.length - 1];
-  const cumulative = computeCumulativeMetrics(time, temperature_2m, relative_humidity_2m, precipitation, rainStart, currentIdx);
-
-  const d = apiData.daily;
   // Tanggal harian Open-Meteo = tengah malam waktu lokal (Asia/Jakarta); server Vercel berjalan di UTC.
   const tzOffset  = apiData.utc_offset_seconds || 0;
   const localDate = unix => new Date((unix + tzOffset) * 1000).toISOString().slice(0, 10);
   const todayStr  = localDate(nowUnix);
+
+  const cur = history[history.length - 1];
+  const cumulative = computeCumulativeMetrics(time, temperature_2m, relative_humidity_2m, precipitation, rainStart, currentIdx, tzOffset);
+
+  const d = apiData.daily;
   const allDaily = d.time.map((t, i) => ({
     unix: t, hujan: d.precipitation_sum[i] || 0,
     rh_max: d.relative_humidity_2m_max[i],
@@ -107,6 +108,20 @@ function parseOpenMeteo(apiData) {
       hujan_7hari: +rain7d.toFixed(1),
     });
   }
+
+  // Model kumulatif yang sama dengan kondisi saat ini, dihitung pada jendela 7 hari
+  // (prakiraan cuaca per jam) yang berakhir di jam terakhir tiap hari prakiraan.
+  const lastIdxOfDay = {};
+  for (let i = 0; i < time.length; i++) lastIdxOfDay[localDate(time[i])] = i;
+  forecast.forEach(day => {
+    const endIdx = lastIdxOfDay[day.date];
+    if (endIdx === undefined || endIdx < 167) return;
+    const startIdx = endIdx - 167;
+    let rain = 0;
+    for (let i = startIdx; i <= endIdx; i++) rain += precipitation[i] || 0;
+    day.hujan_7hari_jam = +rain.toFixed(1);
+    day.cumulative = computeCumulativeMetrics(time, temperature_2m, relative_humidity_2m, precipitation, startIdx, endIdx, tzOffset);
+  });
 
   return {
     current: { suhu: cur.suhu, rh: cur.rh, tekanan: cur.tekanan, hujan_7hari: +hujan7hari.toFixed(1), created_at: cur.created_at },

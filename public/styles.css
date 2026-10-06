@@ -129,9 +129,19 @@ button { cursor: pointer; }
 .pill.lv-med  { color: var(--med-text);  background: var(--med-soft); }
 .pill.lv-low  { color: var(--low-text);  background: var(--low-soft); }
 .pill-solid { font-size: 12px; padding: 5px 11px; background: var(--surface) !important; }
-.bars { display: flex; align-items: flex-end; gap: 3px; height: 26px; }
-.bar { width: 12px; border-radius: 3px; }
-.bar.h0 { height: 8px; } .bar.h1 { height: 16px; } .bar.h2 { height: 26px; }
+.risk-now { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.risk-now-label { font-size: 11px; font-weight: 700; color: var(--muted); }
+.risk-fc { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line2); padding-top: 10px; }
+.risk-fc-label { font-size: 11px; font-weight: 700; color: var(--muted); }
+.bars { display: flex; align-items: flex-end; gap: 3px; }
+.bar-col { flex: 1; max-width: 16px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; height: 40px; }
+.bar { width: 100%; border-radius: 3px; }
+.bar-day { font-size: 10px; line-height: 1; color: var(--muted); }
+.risk-trend { font-size: 12px; font-weight: 700; line-height: 1.35; }
+.trend-up { color: var(--high-text); }
+.trend-down { color: var(--low-text); }
+.trend-flat { color: var(--ink2); }
+.bar.h0 { height: 8px; } .bar.h1 { height: 17px; } .bar.h2 { height: 27px; }
 .bar.lv-high { background: var(--high); } .bar.lv-med { background: var(--med); } .bar.lv-low { background: var(--low); }
 .skeleton { background: var(--skeleton); border-color: transparent; animation: pulse 1.6s ease-in-out infinite; }
 .skeleton-line { height: 52px; border-radius: 10px; background: var(--skeleton); animation: pulse 1.6s ease-in-out infinite; }
