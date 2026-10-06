@@ -49,9 +49,9 @@ function computeCumulativeMetrics(time, temp, rh, rain, startIdx, currentIdx, tz
 
   return {
     blast_fav_hours,
-    blast_favorable_days: Object.values(dayBuckets).filter(d => d.blastFav >= 8).length,
-    high_humid_days:      Object.values(dayBuckets).filter(d => d.rh85    >= 8).length,
-    humid80_days:         Object.values(dayBuckets).filter(d => d.humid80 >= 10).length,
+    blast_favorable_days: Math.min(7, Object.values(dayBuckets).filter(d => d.blastFav >= 8).length),
+    high_humid_days:      Math.min(7, Object.values(dayBuckets).filter(d => d.rh85    >= 8).length),
+    humid80_days:         Math.min(7, Object.values(dayBuckets).filter(d => d.humid80 >= 10).length),
     rh85_hours_72h,
     hdb_rain_hours_7d,
     warm_humid_hours_7d,

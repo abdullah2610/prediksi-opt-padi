@@ -918,27 +918,30 @@ function renderHero() {
   const focus = highs.length ? highs : meds;
   const names = focus.map(d => OPT_INFO[d.id].inline);
 
-  let title;
-  if (highs.length) title = `Waspada ${joinNames(names)}`;
-  else if (meds.length) title = `Siaga ${joinNames(names)}`;
-  else title = 'Kondisi relatif aman';
+  let title, badge, badgeCls;
+  if (highs.length)     { title = `Waspada ${joinNames(names)}`;    badge = 'WASPADA';   badgeCls = 'badge-high'; }
+  else if (meds.length) { title = `Perhatikan ${joinNames(names)}`; badge = 'PERHATIAN'; badgeCls = 'badge-med'; }
+  else                  { title = 'Kondisi relatif aman';           badge = 'AMAN';      badgeCls = 'badge-low'; }
 
   const cur = lastData.current, cum = lastData.cumulative;
   const parts = [];
-  if (cum) parts.push(`Udara sangat lembab (RH ≥85% minimal 8 jam) pada ${cum.high_humid_days} dari 7 hari terakhir, hujan ${fmtNum(cur.hujan_7hari)} mm.`);
-  else parts.push(`Saat ini RH ${cur.rh}%, suhu ${fmtNum(cur.suhu)}°C, hujan 7 hari ${fmtNum(cur.hujan_7hari)} mm.`);
+  const mm = Math.round(+cur.hujan_7hari || 0);
+  if (cum) parts.push(cum.high_humid_days > 0
+    ? `Kelembaban tinggi ${cum.high_humid_days} dari 7 hari terakhir, hujan ${mm} mm.`
+    : `Tidak ada hari sangat lembab dalam 7 hari terakhir, hujan ${mm} mm.`);
+  else parts.push(`Saat ini RH ${cur.rh}%, suhu ${fmtNum(cur.suhu)}°C, hujan 7 hari ${mm} mm.`);
 
   const fc = lastData.forecast || [];
   const next = fc.slice(1, 8).map((day, i) => ({ i: i + 1, day, lv: forecastLevel(day, 'all') }));
   const highDays = next.filter(x => x.lv === 2);
-  if (highDays.length) {
-    const f = highDays[0];
-    const fd = parseDay(f.day.date);
-    const when = f.i === 1 ? 'besok' : `${DAY_LONG[fd.getDay()]} ${fd.getDate()} ${MONTHS[fd.getMonth()]}`;
-    const who = OPT_ORDER.filter(id => highDays.some(x => forecastLevel(x.day, id) === 2)).map(id => OPT_INFO[id].inline);
-    parts.push(`Prakiraan 7 hari ke depan: ${highDays.length} hari berisiko tinggi (${joinNames(who)}), mulai ${when}.`);
-  } else if (fc.length) {
-    parts.push('Prakiraan 7 hari ke depan: tidak ada hari berisiko tinggi.');
+  if (highDays.length === next.length && next.length) {
+    parts.push('Risiko tinggi berlanjut 7 hari ke depan.');
+  } else if (highDays.length) {
+    const fd = parseDay(highDays[0].day.date);
+    const when = highDays[0].i === 1 ? 'besok' : `${DAY_LONG[fd.getDay()]} ${fd.getDate()} ${MONTHS[fd.getMonth()]}`;
+    parts.push(`Risiko tinggi ${highDays.length} dari 7 hari ke depan, mulai ${when}.`);
+  } else if (next.length) {
+    parts.push('Tidak ada risiko tinggi dalam 7 hari ke depan.');
   }
 
   let todo;
@@ -949,6 +952,12 @@ function renderHero() {
     todo = ['Lanjutkan pengamatan rutin seminggu sekali.'];
   }
 
+  $('hero-badge').className = 'hero-badge ' + badgeCls;
+  $('hero-badge-text').textContent = badge;
+  $('hero').classList.toggle('is-dry', (+cur.hujan_7hari || 0) < 5);
+  const topId = focus.length ? focus[0].id : 'blast';
+  $('hero-detail').href = `#/opt/${topId}`;
+  $('hero-detail').setAttribute('aria-label', `Lihat detail risiko ${OPT_INFO[topId].name}`);
   $('hero-title').textContent = title;
   $('hero-text').textContent = parts.join(' ');
   $('hero-todo').textContent = todo.join(' ');

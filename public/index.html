@@ -113,17 +113,85 @@
       <div id="status" class="status" role="status" aria-live="polite" hidden></div>
 
       <section id="hero" class="hero is-loading" aria-labelledby="hero-title">
-        <span class="eyebrow">Status minggu ini</span>
-        <h1 id="hero-title">Memuat status…</h1>
-        <p id="hero-text">Mengambil data cuaca dan menghitung risiko OPT untuk lokasi Anda.</p>
-        <div class="hero-todo">
-          <span class="hero-todo-label">Yang perlu dilakukan</span>
-          <span id="hero-todo">--</span>
+        <svg class="hero-art" viewBox="0 0 358 420" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+          <defs>
+            <pattern id="pp-rows" width="9" height="7" patternUnits="userSpaceOnUse">
+              <path d="M2 7 L3.5 1 M4.5 7 L4.5 0.5 M7 7 L5.5 1.5" stroke="#5FAF7C" stroke-width="1" stroke-linecap="round" fill="none"/>
+            </pattern>
+          </defs>
+          <rect width="358" height="420" fill="#0F3A2C"/>
+          <path d="M0 196 C60 166 110 182 160 158 C210 134 262 166 358 146 L358 270 L0 270Z" fill="#17483A"/>
+          <path d="M0 222 C80 200 150 216 220 196 C280 180 322 200 358 190 L358 270 L0 270Z" fill="#1F5A47"/>
+          <ellipse cx="120" cy="232" rx="170" ry="14" fill="#3C7A62" opacity="0.35"/>
+          <g class="hero-rain">
+            <g fill="#0A2C21">
+              <circle cx="236" cy="46" r="24"/><circle cx="272" cy="34" r="34"/><circle cx="314" cy="44" r="30"/><circle cx="348" cy="56" r="24"/>
+              <rect x="212" y="46" width="160" height="34" rx="17"/>
+            </g>
+            <path d="M222 54 C232 38 252 34 262 40 C270 18 304 14 318 34" fill="none" stroke="#2E6652" stroke-width="2" stroke-linecap="round"/>
+            <g stroke="#8CC5A6" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="9 9" opacity="0.55">
+              <path d="M226 88 L214 150"/><path d="M244 90 L230 170"/><path d="M262 88 L250 148"/>
+              <path d="M280 92 L266 176"/><path d="M298 90 L286 152"/><path d="M316 88 L302 168"/>
+              <path d="M334 90 L322 150"/><path d="M352 92 L340 160"/>
+            </g>
+          </g>
+          <g class="hero-sun">
+            <circle cx="296" cy="70" r="26" fill="#F6C453" opacity="0.9"/>
+            <circle cx="296" cy="70" r="40" fill="#F6C453" opacity="0.12"/>
+          </g>
+          <path d="M0 252 C90 238 200 248 358 236 L358 284 L0 296Z" fill="#2B7149"/>
+          <path d="M0 296 L358 284 L358 334 C240 342 120 330 0 346Z" fill="#358455"/>
+          <path d="M0 296 L358 284 L358 334 C240 342 120 330 0 346Z" fill="url(#pp-rows)" opacity="0.7"/>
+          <path d="M0 346 C120 330 240 342 358 334 L358 420 L0 420Z" fill="#276843"/>
+          <g stroke="#A9DBBD" stroke-width="1" stroke-linecap="round" opacity="0.4" fill="none">
+            <path d="M18 270 C80 262 150 266 210 260"/><path d="M40 318 C110 310 180 314 250 306"/><path d="M10 368 C90 360 160 364 230 356"/>
+          </g>
+          <g fill="none" stroke="#123F27" stroke-width="3.2" stroke-linecap="round">
+            <path d="M300 420 C298 360 292 320 276 282"/><path d="M312 420 C314 360 322 318 340 286"/><path d="M322 420 C326 372 344 340 358 324"/>
+            <path d="M292 420 C286 380 268 350 246 334"/><path d="M306 420 C306 350 308 300 304 262"/>
+          </g>
+          <g fill="none" stroke="#1B5534" stroke-width="2.4" stroke-linecap="round">
+            <path d="M300 420 C306 380 318 352 334 338"/><path d="M310 420 C302 384 286 360 266 352"/>
+          </g>
+          <g fill="#E2B84B">
+            <ellipse cx="300" cy="266" rx="2.6" ry="4.4" transform="rotate(-20 300 266)"/><ellipse cx="296" cy="276" rx="2.6" ry="4.4" transform="rotate(-30 296 276)"/>
+            <ellipse cx="292" cy="287" rx="2.6" ry="4.4" transform="rotate(-38 292 287)"/><ellipse cx="289" cy="298" rx="2.4" ry="4" transform="rotate(-45 289 298)"/>
+            <ellipse cx="308" cy="270" rx="2.6" ry="4.4" transform="rotate(10 308 270)"/><ellipse cx="311" cy="281" rx="2.6" ry="4.4" transform="rotate(16 311 281)"/>
+            <ellipse cx="274" cy="288" rx="2.6" ry="4.4" transform="rotate(-36 274 288)"/><ellipse cx="270" cy="299" rx="2.4" ry="4" transform="rotate(-44 270 299)"/>
+            <ellipse cx="342" cy="292" rx="2.6" ry="4.4" transform="rotate(26 342 292)"/><ellipse cx="346" cy="303" rx="2.4" ry="4" transform="rotate(34 346 303)"/>
+          </g>
+          <g class="hero-rain" fill="#DDF1E5" opacity="0.85">
+            <circle cx="280" cy="318" r="1.8"/><circle cx="331" cy="330" r="1.6"/><circle cx="258" cy="342" r="1.5"/><circle cx="318" cy="300" r="1.4"/>
+          </g>
+        </svg>
+
+        <div class="hero-top">
+          <span id="hero-badge" class="hero-badge badge-loading">
+            <svg class="ico-warn" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9.5 17h-19z"/><path d="M12 10v4M12 17.5v.01"/></svg>
+            <svg class="ico-ok" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"/></svg>
+            <span id="hero-badge-text">MEMUAT</span>
+          </span>
+          <span class="eyebrow">Status minggu ini</span>
+          <h1 id="hero-title">Memuat status…</h1>
+          <p id="hero-text">Mengambil data cuaca dan menghitung risiko OPT untuk lokasi Anda.</p>
         </div>
-        <button type="button" id="share-home" class="hero-share">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
-          Bagikan ke grup tani
-        </button>
+
+        <div class="hero-bottom">
+          <div class="hero-todo">
+            <span class="hero-todo-label">Yang perlu dilakukan</span>
+            <span id="hero-todo">--</span>
+            <div class="hero-links">
+              <a id="hero-detail" href="#/opt/blast" class="hero-link">
+                Lihat detail risiko
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+              </a>
+              <button type="button" id="share-home" class="hero-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+                Bagikan
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="section" aria-labelledby="risk-title">
