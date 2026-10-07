@@ -451,12 +451,13 @@ function applyVarietyToDisease(disease, ctx) {
 
 // Batas fase dihitung mundur dari umur panen P (HST): fase generatif relatif tetap
 // panjangnya, yang memendek pada varietas genjah adalah fase anakan.
+// Primordia ±P−65 (reproduktif ±35 hari sampai berbunga), malai keluar dan berbunga ±P−30.
 const PHASE_DEFS = [
-  { id: 'anakan',   name: 'Anakan',    short: 'Anakan',  back: null, color: '#CFE6D6',
+  { id: 'anakan',    name: 'Anakan',               short: 'Anakan',    back: null, color: '#CFE6D6',
     note: 'Tanaman membentuk anakan. Rawan kresek dan blast daun bila lembab.' },
-  { id: 'bunting',  name: 'Bunting',   short: 'Bunting', back: 65,   color: '#6FB38A',
-    note: 'Malai mulai terbentuk. Ini masa rawan blast leher dimulai, hindari tambahan urea.' },
-  { id: 'berbunga', name: 'Berbunga',  short: 'Bunga',   back: 45,   color: '#E2B84B',
+  { id: 'primordia', name: 'Primordia',            short: 'Primordia', back: 65,   color: '#6FB38A',
+    note: 'Bakal malai mulai terbentuk di dalam batang. Masa rawan blast leher dimulai, hindari tambahan urea.' },
+  { id: 'bunting',   name: 'Bunting/keluar malai', short: 'Bunting',   back: 45,   color: '#E2B84B',
     note: 'Masa paling kritis. Serangan sekarang langsung membuat gabah hampa.' },
   { id: 'masak',    name: 'Pemasakan', short: 'Masak',   back: 30,   color: '#B98B3E',
     note: 'Gabah mengisi dan menguning. Siapkan pengeringan petak menjelang panen.' },
